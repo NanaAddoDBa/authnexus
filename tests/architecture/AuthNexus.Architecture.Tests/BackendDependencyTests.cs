@@ -59,7 +59,10 @@ public sealed class BackendDependencyTests
             ],
             ["AuthNexus.Modules.Audit"] = [],
             ["AuthNexus.Modules.Authentication"] = [],
-            ["AuthNexus.Modules.Identity"] = [],
+            ["AuthNexus.Modules.Identity"] =
+            [
+                "AuthNexus.Domain",
+            ],
             ["AuthNexus.Modules.Notifications"] = [],
             ["AuthNexus.Modules.Policies"] = [],
             ["AuthNexus.Modules.Recovery"] = [],
