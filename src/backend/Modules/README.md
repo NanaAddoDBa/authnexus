@@ -1,7 +1,7 @@
-# Backend Module Boundaries
+# Backend Module Map
 
-The V0.1 repository foundation reserves the following feature boundaries for the modular
-monolith:
+There is no module code in this directory yet. Phase C will turn this map into concrete compilable
+boundaries and dependency tests:
 
 - Applications
 - Identity
@@ -15,5 +15,6 @@ monolith:
 - Audit
 - Administration
 
-These are product boundaries, not a reason to create an assembly for every folder. Their concrete
-domain, application, infrastructure, and API implementation begins in later V0.1 phases.
+These names describe product ownership, not a requirement to create one assembly per item. Phase C
+must decide the smallest useful grouping before folders or projects are added. Domain entities,
+persistence, and HTTP routes remain out of that task.

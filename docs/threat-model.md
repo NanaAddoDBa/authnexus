@@ -1,28 +1,30 @@
 # Threat Model
 
-## Status
+## Assets present at the Phase B boundary
 
-This is the V0.1 Phase A threat-model baseline. It identifies the main security properties that
-later implementation phases must protect. It does not claim that runtime controls already exist.
+There are no accounts or credentials yet. The assets that do exist are the repository, CI history,
+local PostgreSQL/Redis/Mailpit data, development configuration, and the one-way mirror credentials
+that are still unconfigured.
 
-| Threat | Asset | Planned preventive control | Planned detection and recovery |
-| --- | --- | --- | --- |
-| Credential stuffing and brute force | Accounts and credentials | Distributed rate limits, generic failures, maintained password hashing | Audit events, metrics, protection state |
-| Account enumeration | Identifier privacy | Generic public responses and comparable expensive paths | Enumeration-focused negative tests |
-| OTP guessing, flooding, and SMS pumping | Challenges and delivery spend | Shared challenge lifecycle, limits, expiry, resend controls, risk policy | Delivery/audit metrics and alerts |
-| Session fixation or theft | Authenticated sessions | Server-managed opaque cookies, rotation, revocation, expiry | Session audit and active-session management |
-| OAuth callback injection or replay | External identities | State, nonce, PKCE, callback validation, atomic replay protection | Provider failure events and security tests |
-| Unsafe account linking | Account ownership | Explicit linking and no silent email matching | Conflict handling, audit, security notification |
-| Recovery abuse | Account control | Assurance-aware recovery, fresh authentication, restricted flows | Recovery audit, alerts, revocation |
-| Policy misconfiguration | Access assurance | Versioning, dry runs, guardrails, privileged admin step-up | Before/after audit and rollback |
-| Secret or log leakage | Credentials and user data | Secret manager, centralized redaction, secure examples | Redaction tests and incident response |
-| Provider or dependency outage | Required assurance | Explicit provider health and failure behavior | Health, alerts, policy-controlled fallback |
+| Current threat | Current control | Known gap |
+| --- | --- | --- |
+| Local services exposed to the LAN | Every published Compose port binds to `127.0.0.1`. | Local malware and same-user processes can still connect. |
+| Reusing development credentials | Values are named `authnexus-local-*` and documented as disposable. | Compose cannot prevent someone copying them elsewhere. |
+| Accidental data loss | Named volumes survive ordinary `docker compose down`. | `down --volumes` is destructive; there is no backup. |
+| Treating Redis as durable identity storage | Architecture and ADR 0004 reserve PostgreSQL as authoritative. | No application code enforces this boundary yet. |
+| Source/mirror drift | `.source-revision` identifies the imported green source commit. | Automatic sync is disabled until dedicated credentials exist. |
+| Secret committed to Git | `.env` and common key formats are ignored; examples contain local values only. | Ignore rules are not secret scanning. |
+| Misreading design docs as shipped controls | Documents now state current code evidence and missing pieces. | Review discipline remains necessary. |
 
-## Phase A controls
+## Threats introduced by later authentication work
 
-Phase A establishes secret-ignore rules, placeholder-only configuration, repository security
-reporting guidance, no exposed authentication endpoints, and documentation of later control
-ownership. It must not be presented as a complete runtime security baseline.
+Credential stuffing, enumeration, OTP pumping, session theft, OAuth replay, unsafe account linking,
+recovery abuse, and policy misconfiguration become active threats only when their entry points and
+assets exist. The relevant implementation phase must extend this file with concrete source/sink
+paths, prevention, detection, recovery, and tests. A roadmap table by itself is not a control.
 
-This model is updated whenever new authentication methods, recovery paths, policies, provider
-adapters, tenancy, or deployment architecture add attack paths.
+## Phase B operating rule
+
+The Compose stack is a developer dependency stack, not a deployment template. It must not be run on
+a publicly reachable host with the checked-in defaults. Production network policy, TLS, secret
+management, backups, restore exercises, and monitoring remain unimplemented.

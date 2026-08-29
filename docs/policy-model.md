@@ -1,27 +1,18 @@
-# Policy Model
+# Policy Boundary
 
-## Purpose
+No policy evaluator or policy table exists yet. The current web page therefore must not infer which
+authentication methods are allowed, whether registration is open, or whether step-up is required.
 
-AuthNexus uses one backend policy evaluator to determine method eligibility, ordering, assurance,
-MFA, step-up, authentication age, recovery, registration permission, and session policy from
-application, tenant, role, action, evidence, risk, account, and provider-health context.
+The future evaluator belongs in the backend application layer and will receive resolved context
+such as application, tenant, requested action, account, existing evidence, provider health, and
+risk signals. Its result must be data the web can render: ordered methods, required assurance,
+maximum authentication age, registration/recovery permission, session rules, and reason codes.
 
-## Planned contract
+Two constraints already apply:
 
-```csharp
-Task<AuthenticationRequirement> EvaluateAsync(
-    AuthenticationContext context,
-    CancellationToken cancellationToken);
-```
+1. An unavailable provider cannot silently lower the required assurance.
+2. A browser request cannot override server-resolved application or policy configuration.
 
-The result will contain only backend-authoritative decisions such as allowed and ordered methods,
-required assurance, step-up requirements, maximum authentication age, registration/recovery
-permission, session policy, and machine-readable reason codes.
-
-## Current phase
-
-The evaluator and runtime policy data model are not implemented in V0.1 Phase A. This document
-records the future boundary so the frontend scaffold does not assume it owns policy logic.
-
-Policy versioning, dry runs, impact previews, rollback, and the administrative editor belong to
-V0.9. Provider outages must never automatically lower the required assurance.
+Policy persistence, versioning, dry runs, impact previews, and administrative editing belong to
+V0.9. Adding an interface before V0.1 has application and transaction context would create a
+contract based on guesses, so Phase B does not add one.

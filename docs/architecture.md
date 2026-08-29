@@ -1,68 +1,56 @@
 # Architecture
 
-## Architectural style
-
-AuthNexus is a modular monolith. Identity operations frequently require consistent state across
-account creation, credentials, authentication transactions, sessions, recovery, policy, audit,
-and notification outbox records. Networked microservices are not part of V1.0.
-
-## Runtime model
+## Current process and dependency map
 
 ```text
-Consuming application
-        ↓
-Experience Engine (Next.js)
-        ↓
-AuthNexus API and orchestrator (ASP.NET Core)
-        ↓
-Policy and risk evaluation
-        ↓
-Identity, authentication, sessions, recovery, audit, and notification core
-        ↓
-PostgreSQL durable state / Redis non-authoritative coordination / provider adapters
+apps/web (Next.js, :3000)       apps/api (ASP.NET Core, :5220)
+           no API calls yet          no product routes yet
+                                        |
+                                        | not wired yet
+                                        v
+             PostgreSQL :5432   Redis :6379   Mailpit SMTP :1025 / UI :8025
 ```
 
-The backend is authoritative for authentication-method eligibility, assurance, registration,
-linking, recovery, session issuance, and authorization-related decisions. The frontend renders
-the backend result; it does not decide security policy.
+`compose.yaml` owns only the three local dependencies. The web and API run as host processes so
+their normal development tools and reload behavior remain available. All dependency ports publish
+to `127.0.0.1`.
 
-## Repository structure
+The API references `AuthNexus.Application`, `AuthNexus.Contracts`, and
+`AuthNexus.Infrastructure`. Infrastructure references the other backend assemblies. These project
+references are the only implemented backend architecture today; the module directory still
+contains a map rather than runtime modules.
 
-The standalone repository owns the complete product lifecycle:
+## Chosen end-state shape
+
+AuthNexus is being built as a modular monolith. Authentication often updates an account,
+transaction, challenge, session, audit event, and outbox entry together. Keeping those writes in
+one process and one PostgreSQL transaction is simpler to reason about than distributing the first
+version across services.
+
+PostgreSQL will be the durable record. Redis may coordinate cache entries, rate limits, and short
+lived signals, but losing Redis must not erase an identity, session record, challenge result, or
+audit event. Mailpit is a local email sink only.
+
+The planned request path is:
 
 ```text
-apps/web                         Next.js Experience Engine
-apps/api                         ASP.NET Core API host
-src/backend/AuthNexus.*          Contracts, domain, application, infrastructure assemblies
-src/backend/Modules              Reserved modular-monolith product boundaries
-tests                            Unit, integration, security, and end-to-end suites
-docs                             Versioned product and engineering documentation
-infra                            Local, deployment, and observability ownership boundary
+consumer redirect -> Next.js experience -> ASP.NET Core API
+                  -> application/policy resolution
+                  -> one authentication transaction
+                  -> method adapter
+                  -> identity/session decision
+                  -> audit + outbox in PostgreSQL
 ```
 
-The V0.1 Phase A structure is deliberately a foundation. Authentication providers, persistence,
-Docker Compose, sessions, audit, and policy runtime behavior are introduced by later V0.1 phases.
+None of that request path is executable yet.
 
-## One-way monorepo mirror
+## Repository and mirror boundary
 
-`NanaAddoDBa/authnexus` is the only source of truth. `NanaAddoDBa/nana-monorepo/apps/authnexus`
-is a downstream ordinary-files mirror that uses initial Git subtree semantics and later one-way
-snapshot synchronization.
+`NanaAddoDBa/authnexus` owns development, CI, tags, and releases. After source CI passes, the
+monorepo imports the exact source commit into `apps/authnexus` and records it in
+`.source-revision`. Source `.github/` files are excluded because workflows apply only at a
+repository root. There is no reverse sync or submodule.
 
-```text
-authnexus/main
-        ↓ exact source SHA after successful standalone CI
-nana-monorepo sync/authnexus pull request
-        ↓ protected monorepo validation and merge
-nana-monorepo/master: apps/authnexus
-```
-
-The mirror excludes the standalone repository's `.github/` directory because repository-level
-automation belongs to the repository where it runs. The monorepo owns only its root
-`.github/workflows/sync-authnexus.yml` workflow and its mirror metadata file:
-`apps/authnexus/.source-revision`.
-
-The mirror never writes to AuthNexus, does not use submodules, and does not become an AuthNexus
-build or release source. Cross-repository synchronization uses a dedicated secret-backed token or
-GitHub App with the minimum target-repository permissions. It is not enabled until that credential
-is deliberately configured.
+The current monorepo detector supports its established Node.js and Go deployment contracts.
+AuthNexus is not registered there while its mixed Next.js/.NET deployment contract is undefined;
+standalone CI remains the build authority.

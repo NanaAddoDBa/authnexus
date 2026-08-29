@@ -1,8 +1,8 @@
 # Architecture Decision Records
 
-This directory records accepted architectural choices that constrain AuthNexus implementation.
-Each record is concise at repository-foundation stage and is expanded when the associated runtime
-implementation is introduced.
+This directory records choices that later code must respect. An `Accepted` status means the design
+was chosen; it does not mean the runtime behavior exists. `docs/security-decisions.md` tracks the
+current implementation evidence for each security-relevant decision.
 
 | ADR | Decision | Status |
 | --- | --- | --- |

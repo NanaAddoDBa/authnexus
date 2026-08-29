@@ -1,42 +1,35 @@
-# Domain Model
+# Domain Model Ledger
 
-## Current phase
+## Code that exists
 
-V0.1 Phase A contains assembly boundaries only. It creates no database schema, migrations, or
-runtime domain entities. The product identity contract is the only stable code-level contract at
-this stage.
+The only stable domain-level value in code is `AuthNexusProduct` in
+`src/backend/AuthNexus.Contracts/AuthNexusProduct.cs`. The `Domain`, `Application`, and
+`Infrastructure` projects contain assembly markers. There are no entities, value objects,
+repositories, EF Core mappings, or migrations.
 
-## Planned durable concepts
+## V0.1 vocabulary
 
-The V0.1-to-V1.0 model evolves through explicit migrations around these concepts:
+The following names are reserved for later V0.1 work:
 
-- `ApplicationProfile`
-- `UserAccount`
-- `LoginIdentifier`
-- `PasswordCredential`
-- `ExternalIdentity`
-- `PasskeyCredential`
-- `TotpCredential`
-- `RecoveryCode`
-- `AuthenticationTransaction`
-- `AuthenticationChallenge`
-- `Session`
-- `ConsentRecord`
-- `RoleAssignment`
-- `AuthenticationPolicyVersion`
-- `SecurityEvent`
-- `NotificationOutbox`
-- `RegistrationSchema`
-- `ProviderConfiguration`
+| Concept | Reason it belongs in V0.1 | Implemented |
+| --- | --- | --- |
+| `ApplicationProfile` | Resolve the calling application's redirect and policy context. | No |
+| `UserAccount` | Internal identity root independent of login method. | No |
+| `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | No |
+| `Session` | Durable record behind an opaque browser cookie. | No |
+| `SecurityEvent` | Append-only security-relevant activity. | No |
+| `NotificationOutbox` | Commit notification work with the state change that produced it. | No |
 
-The initial V0.1 durable model is limited to application profiles, accounts, authentication
-transactions, sessions, security events, and outbox state. Credentials and provider-specific
-models are added only in their assigned capability releases.
+Password credentials arrive in V0.2; OTP challenges and delivery records in V0.3; external
+identities in V0.4; passkeys in V0.5; TOTP and recovery codes in V0.6. Those models should not be
+pre-created in V0.1 without the behavior and tests that define them.
 
-## Invariants
+## Constraints carried into implementation
 
-Every interactive registration, authentication, linking, recovery, and step-up workflow will use
-one central `AuthenticationTransaction`. Sessions will be server-managed opaque secrets whose
-hashes are stored durably. Sensitive state transitions will generate audit events. No plaintext
-passwords, OTPs, provider secrets, reset secrets, session secrets, or recovery codes belong in
-durable logs or transaction records.
+- One interactive attempt maps to one `AuthenticationTransaction`.
+- Authentication methods produce evidence; they do not create sessions or link accounts directly.
+- Session cookies contain random opaque secrets; durable storage receives only a verifier/hash.
+- Plaintext passwords, OTPs, session secrets, provider secrets, and recovery codes never belong in
+  transaction or audit records.
+- Security notifications are written through an outbox in the same PostgreSQL transaction as the
+  state change.

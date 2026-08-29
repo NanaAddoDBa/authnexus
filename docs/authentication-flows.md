@@ -1,38 +1,26 @@
-# Authentication Flows
+# Authentication Flow Boundary
 
-## Current phase
+There is no authentication flow in the repository yet. `apps/api/Program.cs` builds and runs an
+empty ASP.NET Core host; `apps/web/src/app/page.tsx` renders project status. No endpoint accepts an
+identifier, password, OTP, provider callback, or session cookie.
 
-No authentication workflow is executable in V0.1 Phase A. The web page is a repository-status
-screen and the API intentionally exposes no authentication endpoint.
-
-## Shared future orchestration
-
-Every interactive workflow will use this backend-authoritative sequence:
+When flow work begins, every interactive method must enter the same server-owned sequence:
 
 ```text
-Resolve application context
-        ↓
-Create AuthenticationTransaction
-        ↓
-Evaluate initial policy
-        ↓
-Render allowed methods
-        ↓
-Begin and complete selected method
-        ↓
-Produce AuthenticationEvidence
-        ↓
-Resolve identity, registration, or linking
-        ↓
-Evaluate assurance and step-up requirement
-        ↓
-Create or upgrade a server-managed session
-        ↓
-Audit and return to an allowlisted destination
+resolve ApplicationProfile
+create AuthenticationTransaction
+evaluate allowed methods and required assurance
+collect one method's evidence
+resolve registration, identity, or explicit linking
+re-evaluate assurance
+issue or upgrade an opaque server-managed session
+write SecurityEvent and NotificationOutbox records
+redirect only to an allowlisted destination
 ```
 
-Methods return authentication evidence. They do not independently create sessions, decide policy,
-authorize actions, merge accounts, or grant registration permission.
+A password verifier, Google callback, passkey assertion, or OTP check may produce evidence. It may
+not independently issue a session, merge accounts, change application policy, or choose the return
+URL. This rule keeps provider-specific code out of the orchestration layer.
 
-Detailed password, OTP, provider, passkey, TOTP, recovery, linking, and step-up workflows are
-implemented only in their assigned cumulative releases.
+Detailed success and failure paths will be added alongside executable code and tests. Until then,
+this file defines ownership, not an API contract.

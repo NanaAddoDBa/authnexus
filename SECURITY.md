@@ -20,8 +20,9 @@ keys, recovery codes, or personal data.
 
 ## Supported versions
 
-AuthNexus has not reached a supported production release during V0.1 Phase A. Supported-version
-policy and response targets will be published as versioned releases are accepted.
+AuthNexus has no tagged or supported production release. `main` is active V0.1 development code;
+the local Compose stack and status page must not be treated as a deployed authentication service.
+Supported versions and response targets will be defined before the first production release.
 
 ## Security engineering expectations
 

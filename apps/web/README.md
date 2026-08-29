@@ -1,19 +1,12 @@
-# AuthNexus Web
+# AuthNexus Web Host
 
-This Next.js application is the future AuthNexus Experience Engine. During V0.1 Phase A it is
-only a buildable foundation with a truthful repository-status screen; it does not implement an
-authentication flow.
-
-Run locally from this directory:
+`apps/web` is a Next.js 16 App Router project. The only route implemented is `/`, which states the
+current foundation status. It does not call the API or render an authentication method.
 
 ```powershell
-pnpm dev
+pnpm --dir apps/web install --frozen-lockfile
+pnpm --dir apps/web dev
 ```
 
-Run validation:
-
-```powershell
-pnpm typecheck
-pnpm lint
-pnpm build
-```
+Development runs at `http://localhost:3000`. The authoritative checks are `typecheck`, `lint`, and
+`build`; all three run in source CI.

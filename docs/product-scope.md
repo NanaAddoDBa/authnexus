@@ -1,30 +1,30 @@
-# Product Scope
+# Product Boundary
 
-## Purpose
+AuthNexus exists so consuming applications do not each invent registration, credentials, external
+provider handling, recovery, and session security. A consumer should eventually supply an
+application profile—allowed redirects, branding, registration fields, enabled methods, and policy—
+while AuthNexus owns the security-sensitive workflow.
 
-AuthNexus is a reusable Universal Authentication Platform intended to support multiple consumer,
-SaaS, workforce, administrator, community, and regulated applications through configuration
-rather than duplicated authentication implementations.
+## In this repository
 
-## Product boundary
+- The reusable browser experience in `apps/web`.
+- The public HTTP boundary in `apps/api`.
+- Identity, authentication, session, recovery, policy, audit, notification, and provider code under
+  `src/backend` as those modules are added.
+- Local dependency and future deployment definitions under `infra` and `compose.yaml`.
+- Product decisions and release evidence under `docs`.
 
-AuthNexus owns universal identity and authentication behavior, the reusable Experience Engine,
-application profiles, policy evaluation, sessions, recovery, audit, notifications, and provider
-adapters. A consuming application supplies its registration, branding, redirect, policy, and
-provider configuration.
+## Outside this repository
 
-AuthNexus is not a product-specific login page, a provider-button demonstration, a custom OAuth
-authorization server, a browser-token product, an authorization engine driven by frontend state,
-or an LLM-driven security decision system.
+- A consuming product's business authorization model and application pages.
+- A custom OAuth authorization server or general-purpose identity-provider product.
+- Frontend-owned method eligibility, session issuance, account linking, or assurance decisions.
+- Real SMS, WhatsApp, email, or federation credentials in source control.
+- Development in the downstream `nana-monorepo/apps/authnexus` mirror.
 
-## Current implementation boundary
+## Current evidence
 
-V0.1 Phase A establishes the standalone repository and project skeleton. No runtime identity,
-credential, session, database, provider, or policy behavior is complete at this phase.
-
-## V1.0 product target
-
-The first production-capable baseline must cumulatively include local email/password identity,
-email/SMS/WhatsApp OTP, Google/Apple/Telegram federation, passkeys, TOTP, recovery codes, safe
-linking, sessions, application and assurance policies, observability, operations, testing,
-deployment support, and security documentation.
+At the end of Phase B, the code can build the web and API processes and start PostgreSQL, Redis,
+and Mailpit locally. There is no user record, credential, authentication transaction, cookie, or
+provider callback in the running system. Any document describing those concepts is a design input
+for a later phase, not a statement of completed behavior.
