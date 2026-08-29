@@ -1,0 +1,79 @@
+name: authnexus
+
+services:
+  postgres:
+    image: postgres:16.10-alpine
+    environment:
+      POSTGRES_DB: ${AUTHNEXUS_POSTGRES_DATABASE:-authnexus}
+      POSTGRES_USER: ${AUTHNEXUS_POSTGRES_USERNAME:-authnexus}
+      POSTGRES_PASSWORD: ${AUTHNEXUS_POSTGRES_PASSWORD:-authnexus-local-postgres}
+    ports:
+      - "127.0.0.1:${AUTHNEXUS_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready --username="$${POSTGRES_USER}" --dbname="$${POSTGRES_DB}"
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+
+  redis:
+    image: redis:7.4.5-alpine
+    environment:
+      REDIS_PASSWORD: ${AUTHNEXUS_REDIS_PASSWORD:-authnexus-local-redis}
+      REDISCLI_AUTH: ${AUTHNEXUS_REDIS_PASSWORD:-authnexus-local-redis}
+    command:
+      - sh
+      - -ec
+      - exec redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"
+    ports:
+      - "127.0.0.1:${AUTHNEXUS_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+
+  mailpit:
+    image: axllent/mailpit:v1.27.4
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: 500
+      MP_DISABLE_VERSION_CHECK: "true"
+    ports:
+      - "127.0.0.1:${AUTHNEXUS_MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${AUTHNEXUS_MAILPIT_UI_PORT:-8025}:8025"
+    volumes:
+      - mailpit-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - /mailpit
+        - readyz
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+
+volumes:
+  postgres-data:
+  redis-data:
+  mailpit-data:

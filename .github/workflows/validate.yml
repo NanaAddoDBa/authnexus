@@ -69,11 +69,37 @@ jobs:
       - name: Test backend
         run: dotnet test AuthNexus.sln --configuration Release --no-build
 
+  local-runtime:
+    name: Local runtime
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Validate the Compose model
+        run: docker compose config --quiet
+
+      - name: Start local dependencies
+        run: docker compose up --detach --wait --wait-timeout 120
+
+      - name: Verify dependency behavior
+        shell: pwsh
+        run: ./infra/docker/verify-local-stack.ps1
+
+      - name: Show service logs after a failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Remove local dependencies
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
   request-monorepo-mirror:
     name: Request downstream mirror
     needs:
       - frontend
       - backend
+      - local-runtime
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:

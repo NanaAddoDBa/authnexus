@@ -1,99 +1,61 @@
-# AuthNexus — Universal Authentication Platform
+# AuthNexus
 
-AuthNexus is a reusable, application-neutral identity and authentication platform for multiple
-consuming applications. It is being engineered as production-capable security infrastructure, not
-as a login-page demo or a collection of provider buttons.
+AuthNexus is a standalone identity and authentication platform. This repository is still in V0.1:
+it has a buildable web/API skeleton and a working local dependency stack, but it does not have a
+login endpoint or a user table yet.
 
-## Current status
+## What works today
 
-**Current version:** V0.1 — Universal application/session foundation
-**Current phase:** Phase A — Repository foundation complete
-
-The repository currently contains the initial Next.js web scaffold, ASP.NET Core 10 API and
-backend solution boundaries, a small contract test, documentation foundations, and CI/mirror
-automation definitions. It does **not** yet implement registration, password authentication,
-OTP, federation, passkeys, TOTP, recovery, sessions, database migrations, Redis, Docker Compose,
-or production-provider integrations.
-
-## Product model
-
-AuthNexus separates the reusable identity core from application-specific configuration:
-
-```text
-Consuming application
-        ↓
-Application profile, branding, redirects, registration schema, and policy
-        ↓
-AuthNexus Experience Engine
-        ↓
-AuthNexus authentication, identity, session, policy, audit, and notification core
-```
-
-The authentication engine is not rewritten for each consuming application.
-
-## Architecture
-
-AuthNexus is a modular monolith with:
-
-- Next.js, React, TypeScript, and the App Router for the Experience Engine.
-- ASP.NET Core 10 and C# for the authoritative API and platform core.
-- PostgreSQL as the future durable store and Redis as non-authoritative coordination.
-- Server-managed opaque sessions, centralized authentication transactions, policy-driven method
-  eligibility, provider adapters, a shared OTP engine, audit events, and an outbox as planned
-  platform foundations.
-
-Read [architecture.md](docs/architecture.md) for the current design boundary and
-[product-scope.md](docs/product-scope.md) for the product scope.
-
-## Version roadmap
-
-| Version | Primary capability |
+| Area | Current implementation |
 | --- | --- |
-| V0.1 | Universal application/session foundation |
-| V0.2 | Email/password identity lifecycle |
-| V0.3 | Shared Email/SMS/WhatsApp OTP |
-| V0.4 | Google/Apple/Telegram federation |
-| V0.5 | Passkeys |
-| V0.6 | TOTP and recovery codes |
-| V0.7 | Unified identity and account linking |
-| V0.8 | Recovery and Security Center |
-| V0.9 | Policy and assurance engine |
-| V1.0 | Security operations and production assurance |
+| Web | Next.js 16 app in `apps/web`; `/` renders a static project-status page. |
+| API | ASP.NET Core 10 host in `apps/api`; it starts without exposing product routes. |
+| Backend | Four assembly boundaries under `src/backend`; no modules or persistence code yet. |
+| Local services | PostgreSQL 16.10, Redis 7.4.5, and Mailpit 1.27.4 in `compose.yaml`. |
+| Tests | One product-contract test plus web type-check, lint, and build checks. |
+| CI | Frontend, backend, and local Compose runtime are validated independently. |
 
-Every version preserves prior accepted capabilities and adds one complete coherent capability
-slice. A release tag is created only after the complete version acceptance gate passes.
+Registration, passwords, OTPs, social providers, passkeys, sessions, migrations, policy evaluation,
+and production deployment are not implemented. The documents under `docs/` record how those
+pieces will be added; they are not evidence that the code exists.
 
-## Repository layout
+## Start the local dependencies
 
-```text
-apps/
-├── api/                         ASP.NET Core API host
-└── web/                         Next.js Experience Engine
+Docker Desktop must be running. From the repository root:
 
-src/backend/
-├── AuthNexus.Contracts/
-├── AuthNexus.Domain/
-├── AuthNexus.Application/
-├── AuthNexus.Infrastructure/
-└── Modules/                     Product-boundary map
-
-tests/
-├── unit/
-├── integration/
-├── security/
-└── e2e/
-
-docs/                            Product, architecture, security, release, and implementation notes
-infra/                           Future local/deployment/observability ownership boundary
+```powershell
+docker compose up --detach --wait
+powershell -NoProfile -ExecutionPolicy Bypass -File infra/docker/verify-local-stack.ps1
 ```
 
-## Local prerequisites
+The default endpoints are deliberately bound to the local machine:
 
-- Node.js 22 or later.
-- pnpm 10.18.3.
-- .NET SDK 10.0.400 or a compatible later 10.0 feature band.
+| Service | Address | Local purpose |
+| --- | --- | --- |
+| PostgreSQL | `localhost:5432` | Future durable identity data |
+| Redis | `localhost:6379` | Future non-authoritative coordination |
+| Mailpit SMTP | `localhost:1025` | Capture development email |
+| Mailpit UI | `http://localhost:8025` | Inspect captured email |
 
-Validate the current foundation:
+The checked-in passwords are disposable local defaults. Copy `.env.example` to `.env` only when
+you need different ports or credentials. Never reuse these values outside local development.
+
+Stop the containers while retaining their volumes:
+
+```powershell
+docker compose down
+```
+
+Delete the local databases and captured mail as well:
+
+```powershell
+docker compose down --volumes
+```
+
+See [Local development](docs/local-development.md) for web/API commands, verification output, and
+port-conflict recovery.
+
+## Validate the source tree
 
 ```powershell
 pnpm --dir apps/web install --frozen-lockfile
@@ -104,33 +66,51 @@ pnpm --dir apps/web build
 dotnet restore AuthNexus.sln
 dotnet build AuthNexus.sln --configuration Release --no-restore
 dotnet test AuthNexus.sln --configuration Release --no-build
+
+docker compose config --quiet
+docker compose up --detach --wait --wait-timeout 120
+powershell -NoProfile -ExecutionPolicy Bypass -File infra/docker/verify-local-stack.ps1
 ```
 
-Docker Compose, PostgreSQL, Redis, Mailpit, and local delivery fakes are added in V0.1 Phase B;
-they are not available yet.
+## Repository map
 
-## Documentation
+```text
+apps/api/                       ASP.NET Core process
+apps/web/                       Next.js process
+src/backend/AuthNexus.*         backend assembly boundaries
+src/backend/Modules/            module map; no module code yet
+tests/                          unit/integration/security/e2e roots
+infra/docker/                   local-stack verification
+docs/decisions/                 accepted architecture decisions
+docs/implementation-notes/      completed task records and test evidence
+compose.yaml                    PostgreSQL, Redis, and Mailpit
+```
 
-- [Product scope](docs/product-scope.md)
-- [Architecture](docs/architecture.md)
-- [Domain model](docs/domain-model.md)
-- [Threat model](docs/threat-model.md)
-- [Authentication flows](docs/authentication-flows.md)
-- [Policy model](docs/policy-model.md)
-- [Security decisions](docs/security-decisions.md)
+## Release progress
+
+V0.1 is delivered as small, reviewable phases. Phase A established the repository and downstream
+mirror. Phase B established the local dependency stack. The next phase is the backend/module
+skeleton; it must not introduce authentication behavior early. No `v0.1.0` tag exists because the
+rest of V0.1 has not passed acceptance.
+
+The detailed phase ledger is in [docs/releases/v0.1.md](docs/releases/v0.1.md).
+
+## Source ownership
+
+[`NanaAddoDBa/authnexus`](https://github.com/NanaAddoDBa/authnexus) is the only development and
+release repository. `NanaAddoDBa/nana-monorepo/apps/authnexus` is an ordinary-files mirror of a
+specific green source commit. Changes made in the mirror are not synchronized back.
+
+The source `.github/` directory is excluded from the mirror. The monorepo owns its sync workflow
+and records the imported source SHA in `apps/authnexus/.source-revision`.
+
+## Working documents
+
+- [Product boundary](docs/product-scope.md)
+- [Current and planned architecture](docs/architecture.md)
 - [Local development](docs/local-development.md)
-- [Testing](docs/testing.md)
-- [V0.1 release record](docs/releases/v0.1.md)
-
-## Downstream monorepo mirror
-
-The standalone `NanaAddoDBa/authnexus` repository is the AuthNexus source of truth. The ordinary
-files under `NanaAddoDBa/nana-monorepo/apps/authnexus` are a one-way downstream mirror. Develop
-AuthNexus only in this repository. The mirror design and its credential boundary are documented
-in [docs/architecture.md](docs/architecture.md) and in the monorepo mirror guide once the target
-integration is merged.
-
-## Security
-
-AuthNexus is security-sensitive software. Read [SECURITY.md](SECURITY.md) before reporting a
-vulnerability or contributing security-sensitive changes.
+- [Testing contract](docs/testing.md)
+- [Threat model](docs/threat-model.md)
+- [Security decisions](docs/security-decisions.md)
+- [V0.1 phase ledger](docs/releases/v0.1.md)
+- [Security reporting](SECURITY.md)
