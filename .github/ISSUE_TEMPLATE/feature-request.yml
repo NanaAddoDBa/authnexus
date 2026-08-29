@@ -1,0 +1,27 @@
+name: Feature request
+description: Propose a future AuthNexus capability or improvement.
+title: "feature: "
+labels:
+  - enhancement
+body:
+  - type: input
+    id: target-version
+    attributes:
+      label: Proposed target version
+      description: Identify the planned capability slice or explain why a new one is needed.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Explain the application-neutral problem and who is affected.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Include security, migration, testing, and operational consequences where relevant.
+    validations:
+      required: true

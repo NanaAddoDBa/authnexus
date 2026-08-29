@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible non-sensitive defect in AuthNexus.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include passwords, OTPs, tokens, session data, provider secrets, private keys,
+        recovery codes, or personal data. Use the private security-reporting path for security
+        vulnerabilities.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: State the AuthNexus version, branch, or commit where the issue appears.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest safe sequence that reproduces the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true

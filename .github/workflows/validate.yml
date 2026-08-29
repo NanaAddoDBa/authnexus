@@ -1,0 +1,98 @@
+name: Validate AuthNexus
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: authnexus-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.18.3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        run: pnpm --dir apps/web install --frozen-lockfile
+
+      - name: Type-check frontend
+        run: pnpm --dir apps/web typecheck
+
+      - name: Lint frontend
+        run: pnpm --dir apps/web lint
+
+      - name: Build frontend
+        run: pnpm --dir apps/web build
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore backend dependencies
+        run: dotnet restore AuthNexus.sln
+
+      - name: Build backend
+        run: dotnet build AuthNexus.sln --configuration Release --no-restore
+
+      - name: Test backend
+        run: dotnet test AuthNexus.sln --configuration Release --no-build
+
+  request-monorepo-mirror:
+    name: Request downstream mirror
+    needs:
+      - frontend
+      - backend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch the exact validated revision
+        env:
+          GH_TOKEN: ${{ secrets.AUTHNEXUS_MIRROR_TOKEN }}
+          SOURCE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${GH_TOKEN}" ]]; then
+            echo "AuthNexus mirror dispatch is not enabled because AUTHNEXUS_MIRROR_TOKEN is not configured."
+            exit 0
+          fi
+
+          gh api \
+            --method POST \
+            repos/NanaAddoDBa/nana-monorepo/dispatches \
+            -f event_type=authnexus-updated \
+            -F "client_payload[source_sha]=${SOURCE_SHA}" \
+            -F "client_payload[source_branch]=main"
