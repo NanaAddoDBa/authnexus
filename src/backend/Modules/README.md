@@ -4,17 +4,17 @@ Each child directory is a .NET class-library project named `AuthNexus.Modules.<M
 assembly is the compile-time ownership boundary. Modules cannot reference one another;
 cross-module workflows will be coordinated from `AuthNexus.Application`.
 
-All eleven assemblies retain a `ModuleAssemblyMarker` for catalog verification. Applications is
-now the first module with domain code. It references the dependency-free `AuthNexus.Domain`
-assembly for shared application and tenant identifiers. That narrow inward dependency does not
-allow Applications to reach another product module, infrastructure, or the API.
+All eleven assemblies retain a `ModuleAssemblyMarker` for catalog verification. Applications and
+Identity now contain domain code. Both reference the dependency-free `AuthNexus.Domain` assembly
+for identifiers that later modules must share. Those narrow inward dependencies do not allow
+either module to reach another product module, infrastructure, or the API.
 
 ## Current module map
 
 | Assembly | Owned boundary | Code present now |
 | --- | --- | --- |
 | `AuthNexus.Modules.Applications` | Registered applications, redirect configuration, branding references, and application settings. | `ApplicationProfile`, type/audience/mode enums, and safe web `RedirectUri`. No resolver or storage. |
-| `AuthNexus.Modules.Identity` | Accounts, identifiers, credentials, external identities, linking, and account lifecycle. | Marker only. |
+| `AuthNexus.Modules.Identity` | Accounts, identifiers, credentials, external identities, linking, and account lifecycle. | `UserAccount`, six explicit states, seven legal transitions, and transition-specific rejection. No login identifiers, credentials, resolver, or storage. |
 | `AuthNexus.Modules.Authentication` | Authentication transactions, challenges, method coordination, and evidence verification. | Marker only. |
 | `AuthNexus.Modules.Registration` | Pending registration, schema-driven fields, terms acceptance, and completion. | Marker only. |
 | `AuthNexus.Modules.Sessions` | Session issue, rotation, expiry, revocation, logout, and authentication evidence. | Marker only. |
@@ -47,7 +47,8 @@ AuthNexus.Application
 └── AuthNexus.Modules.* (all eleven module assemblies)
 
 AuthNexus.Modules.Applications -> AuthNexus.Domain
-other ten modules              -> no project references
+AuthNexus.Modules.Identity     -> AuthNexus.Domain
+other nine modules             -> no project references
 AuthNexus.Contracts            -> no project references
 AuthNexus.Domain               -> no project references
 ```
@@ -58,5 +59,5 @@ does not match its assembly, a new production project is not declared, or any di
 reference differs from this graph. Changes to the graph therefore require an explicit test update
 in the same review.
 
-D.1 adds one in-memory entity boundary. It adds no repositories, database packages, provider
-adapters, dependency-injection registration, profile lookup, or HTTP endpoints.
+D.1 and D.2 add two in-memory entity boundaries. They add no repositories, database packages,
+provider adapters, dependency-injection registration, runtime lookup, or HTTP endpoints.

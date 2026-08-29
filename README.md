@@ -2,7 +2,8 @@
 
 AuthNexus is a standalone identity and authentication platform. This repository is still in V0.1:
 it has a buildable web/API skeleton, a working local dependency stack, and the first application
-domain model. It still has no login endpoint, user table, or application-profile storage.
+and identity domain models. It still has no login endpoint, database tables, or runtime profile or
+account lookup.
 
 ## What works today
 
@@ -10,14 +11,14 @@ domain model. It still has no login endpoint, user table, or application-profile
 | --- | --- |
 | Web | Next.js 16 app in `apps/web`; `/` renders a static project-status page. |
 | API | ASP.NET Core 10 host in `apps/api`; it starts without exposing product routes. |
-| Backend | Eleven compiled module assemblies. `Applications` owns an immutable `ApplicationProfile` foundation; the other ten modules still contain markers only. There is no persistence. |
+| Backend | Eleven compiled module assemblies. `Applications` owns `ApplicationProfile`; `Identity` owns the explicit `UserAccount` state machine. The other nine modules still contain markers only. There is no persistence. |
 | Local services | PostgreSQL 16.10, Redis 7.4.5, and Mailpit 1.27.4 in `compose.yaml`. |
-| Tests | One product-contract test, 34 application-profile tests, two executable architecture rules, and web type-check, lint, and build checks. |
+| Tests | One product-contract test, 34 application-profile tests, 46 user-account tests, two executable architecture rules, and web type-check, lint, and build checks. |
 | CI | Frontend, backend, and local Compose runtime are validated independently. |
 
-Application-profile loading, registration, passwords, OTPs, social providers, passkeys, sessions,
-migrations, policy evaluation, and production deployment are not implemented. The documents under
-`docs/` distinguish current code from later work.
+Application/account loading, login identifiers, registration, passwords, OTPs, social providers,
+passkeys, sessions, migrations, policy evaluation, and production deployment are not implemented.
+The documents under `docs/` distinguish current code from later work.
 
 ## Start the local dependencies
 
@@ -80,7 +81,7 @@ apps/web/                       Next.js process
 src/backend/AuthNexus.*         shared technical-layer assemblies
 src/backend/Modules/*/          eleven product-module class libraries
 tests/architecture/             compiled-module and project-graph checks
-tests/unit/                     product-contract and ApplicationProfile tests
+tests/unit/                     product, ApplicationProfile, and UserAccount tests
 tests/integration|security|e2e  reserved test roots with scope notes
 infra/docker/                   local-stack verification
 docs/decisions/                 accepted architecture decisions
@@ -91,10 +92,10 @@ compose.yaml                    PostgreSQL, Redis, and Mailpit
 ## Release progress
 
 V0.1 is delivered as small, reviewable phases. Phases A through C established the repository,
-local dependencies, and compile-time module boundaries. D.1 now supplies the
-`ApplicationProfile` foundation; Phase D remains open for the other five V0.1 domain concepts.
-Persistence remains Phase E work. No `v0.1.0` tag exists because the rest of V0.1 has not passed
-acceptance.
+local dependencies, and compile-time module boundaries. D.1 supplies the `ApplicationProfile`
+foundation, and D.2 supplies the `UserAccount` state model. Phase D remains open for the other four
+V0.1 domain concepts. Persistence remains Phase E work. No `v0.1.0` tag exists because the rest of
+V0.1 has not passed acceptance.
 
 The detailed phase ledger is in [docs/releases/v0.1.md](docs/releases/v0.1.md).
 

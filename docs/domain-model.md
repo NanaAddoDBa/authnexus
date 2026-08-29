@@ -1,6 +1,6 @@
 # Domain Model Ledger
 
-## Code that exists
+## D.1 ApplicationProfile
 
 D.1 introduces one entity boundary and three supporting value types:
 
@@ -34,6 +34,50 @@ domain allowlist query, not an authentication-request validator: there is no end
 lookup, tenant lookup, or return-navigation handler yet. Native custom schemes and verified app or
 universal-link configuration are also deferred.
 
+## D.2 UserAccount
+
+`UserAccount` belongs to `AuthNexus.Modules.Identity`. Its shared `UserId` value lives in
+`AuthNexus.Domain.Identity` so later transaction, session, audit, and notification models can refer
+to the same account without referencing the Identity module.
+
+The D.2 root contains only:
+
+- `UserId`;
+- `State`;
+- `CreatedAt`;
+- `StateChangedAt`.
+
+An account is always created in `PendingVerification`; callers cannot select an initial state or
+set `State` directly. Both timestamps are required, normalized to UTC, and state changes cannot be
+recorded before the preceding state change.
+
+### Legal state transitions
+
+| Operation | Required state | Resulting state |
+| --- | --- | --- |
+| `Activate` | `PendingVerification` | `Active` |
+| `ProtectTemporarily` | `Active` | `TemporarilyProtected` |
+| `RestoreAfterProtection` | `TemporarilyProtected` | `Active` |
+| `Suspend` | `Active` | `Suspended` |
+| `Reactivate` | `Suspended` | `Active` |
+| `RequestDeletion` | `Active` | `DeletionPending` |
+| `CompleteDeletion` | `DeletionPending` | `Deleted` |
+
+Every other state/operation pair throws `InvalidUserAccountStateTransitionException` without
+changing either `State` or `StateChangedAt`. `Deleted` is terminal; there is no direct
+`Active -> Deleted` path, deletion cancellation, or caller-supplied arbitrary transition. The
+temporary-protection restoration and administrative reactivation paths return to `Active` through
+separate methods so their intent cannot be confused.
+
+The entity deliberately carries no email, phone, username, credential, display profile,
+application ID, tenant ID, role, or consent. D.2 establishes the platform identity root, not a
+login method or application membership.
+
+The plans require every security-sensitive account transition to emit an audit event. D.2 does not
+claim that behavior: no runtime workflow or persistence path calls these methods yet. The later
+SecurityEvent and persistence work must make audit emission atomic with the persisted transition
+before an endpoint or administrative operation can change account state.
+
 ## V0.1 vocabulary
 
 The V0.1 domain ledger is:
@@ -41,7 +85,7 @@ The V0.1 domain ledger is:
 | Concept | Reason it belongs in V0.1 | Implemented |
 | --- | --- | --- |
 | `ApplicationProfile` | Resolve the calling application's redirect and policy context. | D.1 foundation |
-| `UserAccount` | Internal identity root independent of login method. | No |
+| `UserAccount` | Internal identity root independent of login method. | D.2 foundation |
 | `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | No |
 | `Session` | Durable record behind an opaque browser cookie. | No |
 | `SecurityEvent` | Append-only security-relevant activity. | No |
@@ -51,8 +95,8 @@ Password credentials arrive in V0.2; OTP challenges and delivery records in V0.3
 identities in V0.4; passkeys in V0.5; TOTP and recovery codes in V0.6. Those models should not be
 pre-created in V0.1 without the behavior and tests that define them.
 
-There are no repositories, EF Core mappings, migrations, profile seeds, administrative commands,
-or HTTP representations. Those omissions are deliberate: D.1 defines valid in-memory state only.
+There are no repositories, EF Core mappings, migrations, seeds, administrative commands, or HTTP
+representations. Those omissions are deliberate: D.1 and D.2 define valid in-memory state only.
 
 ## Constraints carried into implementation
 

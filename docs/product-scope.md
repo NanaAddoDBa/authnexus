@@ -24,8 +24,9 @@ while AuthNexus owns the security-sensitive workflow.
 
 ## Current evidence
 
-Through D.1, the code can build the web and API processes, start PostgreSQL, Redis, and Mailpit
-locally, and construct an `ApplicationProfile` that rejects unsafe or incomplete configuration.
-No running process loads or stores that profile. There is still no user record, credential,
-authentication transaction, cookie, authentication endpoint, or provider callback. Later-flow
-documents remain design inputs until corresponding code and tests exist.
+Through D.2, the code can build the web and API processes, start PostgreSQL, Redis, and Mailpit
+locally, construct an `ApplicationProfile` that rejects unsafe or incomplete configuration, and
+exercise the legal `UserAccount` state transitions in memory. No running process loads or stores
+either model. There is still no login identifier, credential, authentication transaction, cookie,
+authentication endpoint, or provider callback. Later-flow documents remain design inputs until
+corresponding code and tests exist.

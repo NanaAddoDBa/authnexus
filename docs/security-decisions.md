@@ -5,7 +5,8 @@ corresponding code today.
 
 | Decision | Current evidence | Still missing |
 | --- | --- | --- |
-| Modular monolith | Eleven module assemblies, one application orchestration boundary, an `ApplicationProfile` owned by Applications, and executable tests for the exact direct-reference graph. | The other V0.1 domain roots, transaction boundaries, runtime composition, and cross-module workflows. |
+| Modular monolith | Eleven module assemblies, one application orchestration boundary, `ApplicationProfile` owned by Applications, `UserAccount` owned by Identity, and executable tests for the exact direct-reference graph. | The other V0.1 domain roots, transaction boundaries, runtime composition, and cross-module workflows. |
+| Explicit account state | Six states, seven named legal transitions, all 35 forbidden state/action pairs tested, and terminal deletion without contradictory booleans. | Atomic audit emission, persistence/concurrency rules, administrative authorization, and runtime state checks. |
 | PostgreSQL is durable | Pinned local container, volume, and query-based acceptance check. | EF Core model, migrations, backups, production service. |
 | Redis is coordination only | Authenticated local container with append-only local data. | Consumers, outage policy, rate-limit implementation. |
 | Server-managed opaque sessions | ADR 0003 only. | Cookie, secret generation, verifier storage, rotation, revocation. |
