@@ -29,6 +29,11 @@ public sealed record RedirectUri
             throw new ArgumentException("A redirect URI must be an absolute URI with a host.", nameof(value));
         }
 
+        if (uri.Host.Contains('*', StringComparison.Ordinal))
+        {
+            throw new ArgumentException("A redirect URI cannot contain a wildcard host.", nameof(value));
+        }
+
         if (!string.IsNullOrEmpty(uri.UserInfo))
         {
             throw new ArgumentException("A redirect URI cannot contain user information.", nameof(value));

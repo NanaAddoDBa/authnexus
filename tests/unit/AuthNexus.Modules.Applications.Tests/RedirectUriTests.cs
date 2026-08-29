@@ -24,6 +24,7 @@ public sealed class RedirectUriTests
     [InlineData("https:///callback")]
     [InlineData("ftp://accounts.example.com/callback")]
     [InlineData("http://accounts.example.com/callback")]
+    [InlineData("https://*.example.com/callback")]
     [InlineData("https://user:secret@accounts.example.com/callback")]
     [InlineData("https://accounts.example.com/callback#complete")]
     [InlineData("https://accounts.example.com\\@attacker.example/callback")]
