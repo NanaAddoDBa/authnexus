@@ -1,32 +1,32 @@
 # Backend Modules
 
 Each child directory is a .NET class-library project named `AuthNexus.Modules.<Module>`. The
-assembly is the compile-time ownership boundary; adding a direct reference from one module to
-another is not allowed. Cross-module workflows will be coordinated from `AuthNexus.Application`
-instead of turning one module into an informal composition root.
+assembly is the compile-time ownership boundary. Modules cannot reference one another;
+cross-module workflows will be coordinated from `AuthNexus.Application`.
 
-The only source in each module today is `ModuleAssemblyMarker`. Those markers prove that all
-required assemblies build and give architecture tests a stable type to identify. They are not
-service locators, runtime plug-ins, domain models, or implemented product behavior.
+All eleven assemblies retain a `ModuleAssemblyMarker` for catalog verification. Applications is
+now the first module with domain code. It references the dependency-free `AuthNexus.Domain`
+assembly for shared application and tenant identifiers. That narrow inward dependency does not
+allow Applications to reach another product module, infrastructure, or the API.
 
-## Ownership reserved for later phases
+## Current module map
 
-| Assembly | Future ownership; not implemented in Phase C |
-| --- | --- |
-| `AuthNexus.Modules.Applications` | Registered applications, redirect configuration, branding references, and application settings. |
-| `AuthNexus.Modules.Identity` | Accounts, identifiers, credentials, external identities, linking, and account lifecycle. |
-| `AuthNexus.Modules.Authentication` | Authentication transactions, challenges, method coordination, and evidence verification. |
-| `AuthNexus.Modules.Registration` | Pending registration, schema-driven fields, terms acceptance, and completion. |
-| `AuthNexus.Modules.Sessions` | Session issue, rotation, expiry, revocation, logout, and authentication evidence. |
-| `AuthNexus.Modules.Recovery` | Password reset, factor recovery or replacement, recovery codes, and session consequences. |
-| `AuthNexus.Modules.Policies` | Method eligibility and ordering, assurance, step-up, session rules, and policy versions. |
-| `AuthNexus.Modules.Risk` | Deterministic security signals, throttling inputs, provider health, and explainable risk results. |
-| `AuthNexus.Modules.Notifications` | Transactional email, SMS, WhatsApp, outbox delivery, retry, and delivery status. |
-| `AuthNexus.Modules.Audit` | Security and administrative events, correlation, actor/target relationships, and redaction. |
-| `AuthNexus.Modules.Administration` | Application, provider, policy, schema, branding, security-event, and rollout management. |
+| Assembly | Owned boundary | Code present now |
+| --- | --- | --- |
+| `AuthNexus.Modules.Applications` | Registered applications, redirect configuration, branding references, and application settings. | `ApplicationProfile`, type/audience/mode enums, and safe web `RedirectUri`. No resolver or storage. |
+| `AuthNexus.Modules.Identity` | Accounts, identifiers, credentials, external identities, linking, and account lifecycle. | Marker only. |
+| `AuthNexus.Modules.Authentication` | Authentication transactions, challenges, method coordination, and evidence verification. | Marker only. |
+| `AuthNexus.Modules.Registration` | Pending registration, schema-driven fields, terms acceptance, and completion. | Marker only. |
+| `AuthNexus.Modules.Sessions` | Session issue, rotation, expiry, revocation, logout, and authentication evidence. | Marker only. |
+| `AuthNexus.Modules.Recovery` | Password reset, factor recovery or replacement, recovery codes, and session consequences. | Marker only. |
+| `AuthNexus.Modules.Policies` | Method eligibility and ordering, assurance, step-up, session rules, and policy versions. | Marker only. |
+| `AuthNexus.Modules.Risk` | Deterministic security signals, throttling inputs, provider health, and explainable risk results. | Marker only. |
+| `AuthNexus.Modules.Notifications` | Transactional email, SMS, WhatsApp, outbox delivery, retry, and delivery status. | Marker only. |
+| `AuthNexus.Modules.Audit` | Security and administrative events, correlation, actor/target relationships, and redaction. | Marker only. |
+| `AuthNexus.Modules.Administration` | Application, provider, policy, schema, branding, security-event, and rollout management. | Marker only. |
 
-The table assigns ownership so later work has a destination. It does not mean any listed
-capability exists yet.
+The ownership column reserves a destination for later work. Only the code named in the final
+column exists.
 
 ## Enforced dependency graph
 
@@ -46,9 +46,10 @@ AuthNexus.Application
 ├── AuthNexus.Domain
 └── AuthNexus.Modules.* (all eleven module assemblies)
 
-AuthNexus.Modules.*  -> no project references
-AuthNexus.Contracts  -> no project references
-AuthNexus.Domain     -> no project references
+AuthNexus.Modules.Applications -> AuthNexus.Domain
+other ten modules              -> no project references
+AuthNexus.Contracts            -> no project references
+AuthNexus.Domain               -> no project references
 ```
 
 `tests/architecture/AuthNexus.Architecture.Tests` compiles against every module marker and reads
@@ -57,5 +58,5 @@ does not match its assembly, a new production project is not declared, or any di
 reference differs from this graph. Changes to the graph therefore require an explicit test update
 in the same review.
 
-Phase C intentionally contains no entities, repositories, database packages, provider adapters,
-dependency-injection registration, or HTTP endpoints.
+D.1 adds one in-memory entity boundary. It adds no repositories, database packages, provider
+adapters, dependency-injection registration, profile lookup, or HTTP endpoints.

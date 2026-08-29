@@ -24,7 +24,8 @@ while AuthNexus owns the security-sensitive workflow.
 
 ## Current evidence
 
-At the end of Phase B, the code can build the web and API processes and start PostgreSQL, Redis,
-and Mailpit locally. There is no user record, credential, authentication transaction, cookie, or
-provider callback in the running system. Any document describing those concepts is a design input
-for a later phase, not a statement of completed behavior.
+Through D.1, the code can build the web and API processes, start PostgreSQL, Redis, and Mailpit
+locally, and construct an `ApplicationProfile` that rejects unsafe or incomplete configuration.
+No running process loads or stores that profile. There is still no user record, credential,
+authentication transaction, cookie, authentication endpoint, or provider callback. Later-flow
+documents remain design inputs until corresponding code and tests exist.

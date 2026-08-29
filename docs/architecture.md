@@ -34,18 +34,22 @@ AuthNexus.Application
 ├── AuthNexus.Domain
 └── AuthNexus.Modules.* (eleven product modules)
 
-AuthNexus.Modules.*  -> no project references
-AuthNexus.Contracts  -> no project references
-AuthNexus.Domain     -> no project references
+AuthNexus.Modules.Applications -> AuthNexus.Domain
+other ten modules              -> no project references
+AuthNexus.Contracts            -> no project references
+AuthNexus.Domain               -> no project references
 ```
 
 Each product module is a separate class-library assembly under `src/backend/Modules`. The
 application assembly is the cross-module orchestration boundary; modules do not reference one
-another, infrastructure, or the API. Architecture tests compare the checked-in project files with
-this exact graph.
+another, infrastructure, or the API. `Applications` depends on the shared Domain assembly for
+`ApplicationId` and `TenantId`; no other module dependency was opened. Architecture tests compare
+the checked-in project files with this exact graph.
 
-The module assemblies contain markers only. There are still no domain entities, services,
-repositories, dependency-injection registrations, or API routes.
+`AuthNexus.Modules.Applications` now contains the in-memory `ApplicationProfile` foundation and
+redirect-value rules. The other ten module assemblies contain markers only. There are still no
+repositories, database mappings, dependency-injection registrations, profile resolver, or API
+routes.
 
 ## Chosen end-state shape
 
@@ -69,7 +73,9 @@ consumer redirect -> Next.js experience -> ASP.NET Core API
                   -> audit + outbox in PostgreSQL
 ```
 
-None of that request path is executable yet.
+Profile construction and allowlist membership are executable domain behavior. The request path is
+not executable: no process loads a profile, resolves a policy, or accepts an authentication
+request yet.
 
 ## Repository and mirror boundary
 
