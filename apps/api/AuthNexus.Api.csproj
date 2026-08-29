@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\backend\AuthNexus.Application\AuthNexus.Application.csproj" />
+    <ProjectReference Include="..\..\src\backend\AuthNexus.Contracts\AuthNexus.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\backend\AuthNexus.Infrastructure\AuthNexus.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
