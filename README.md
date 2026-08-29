@@ -7,7 +7,7 @@ as a login-page demo or a collection of provider buttons.
 ## Current status
 
 **Current version:** V0.1 — Universal application/session foundation
-**Current phase:** Phase A — Repository foundation
+**Current phase:** Phase A — Repository foundation complete
 
 The repository currently contains the initial Next.js web scaffold, ASP.NET Core 10 API and
 backend solution boundaries, a small contract test, documentation foundations, and CI/mirror
