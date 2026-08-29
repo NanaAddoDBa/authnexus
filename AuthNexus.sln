@@ -55,6 +55,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "architecture", "architectur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthNexus.Architecture.Tests", "tests\architecture\AuthNexus.Architecture.Tests\AuthNexus.Architecture.Tests.csproj", "{66E5EECE-FD57-4509-A833-6DF07B520B57}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthNexus.Modules.Applications.Tests", "tests\unit\AuthNexus.Modules.Applications.Tests\AuthNexus.Modules.Applications.Tests.csproj", "{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -281,6 +283,18 @@ Global
 		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|x64.Build.0 = Release|Any CPU
 		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|x86.ActiveCfg = Release|Any CPU
 		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|x86.Build.0 = Release|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Debug|x64.Build.0 = Debug|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Debug|x86.Build.0 = Debug|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Release|x64.ActiveCfg = Release|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Release|x64.Build.0 = Release|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Release|x86.ActiveCfg = Release|Any CPU
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -309,5 +323,6 @@ Global
 		{E02DC5AD-4C67-4267-ABCA-D47A98A683EF} = {80AA2D47-A8A8-B250-956F-7C35AE84D60B}
 		{875CD587-DE2F-08EE-74FB-D6BE4E474EF3} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{66E5EECE-FD57-4509-A833-6DF07B520B57} = {875CD587-DE2F-08EE-74FB-D6BE4E474EF3}
+		{9AC1976E-0CA8-4090-9DA6-4E145FC9F8A5} = {9D556B49-86D1-93A7-9596-FFAAB74EC556}
 	EndGlobalSection
 EndGlobal
