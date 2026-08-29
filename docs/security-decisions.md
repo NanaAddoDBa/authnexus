@@ -5,7 +5,7 @@ corresponding code today.
 
 | Decision | Current evidence | Still missing |
 | --- | --- | --- |
-| Modular monolith | Separate Contracts, Domain, Application, Infrastructure, and API projects. | Concrete modules and dependency rules. |
+| Modular monolith | Eleven module assemblies, one application orchestration boundary, and executable tests for the exact direct-reference graph. | Domain behavior, transaction boundaries, module contracts, and runtime composition. |
 | PostgreSQL is durable | Pinned local container, volume, and query-based acceptance check. | EF Core model, migrations, backups, production service. |
 | Redis is coordination only | Authenticated local container with append-only local data. | Consumers, outage policy, rate-limit implementation. |
 | Server-managed opaque sessions | ADR 0003 only. | Cookie, secret generation, verifier storage, rotation, revocation. |

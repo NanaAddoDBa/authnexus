@@ -16,9 +16,36 @@ their normal development tools and reload behavior remain available. All depende
 to `127.0.0.1`.
 
 The API references `AuthNexus.Application`, `AuthNexus.Contracts`, and
-`AuthNexus.Infrastructure`. Infrastructure references the other backend assemblies. These project
-references are the only implemented backend architecture today; the module directory still
-contains a map rather than runtime modules.
+`AuthNexus.Infrastructure`. The production project graph is now:
+
+```text
+AuthNexus.Api
+├── AuthNexus.Application
+├── AuthNexus.Contracts
+└── AuthNexus.Infrastructure
+
+AuthNexus.Infrastructure
+├── AuthNexus.Application
+├── AuthNexus.Contracts
+└── AuthNexus.Domain
+
+AuthNexus.Application
+├── AuthNexus.Contracts
+├── AuthNexus.Domain
+└── AuthNexus.Modules.* (eleven product modules)
+
+AuthNexus.Modules.*  -> no project references
+AuthNexus.Contracts  -> no project references
+AuthNexus.Domain     -> no project references
+```
+
+Each product module is a separate class-library assembly under `src/backend/Modules`. The
+application assembly is the cross-module orchestration boundary; modules do not reference one
+another, infrastructure, or the API. Architecture tests compare the checked-in project files with
+this exact graph.
+
+The module assemblies contain markers only. There are still no domain entities, services,
+repositories, dependency-injection registrations, or API routes.
 
 ## Chosen end-state shape
 

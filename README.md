@@ -10,9 +10,9 @@ login endpoint or a user table yet.
 | --- | --- |
 | Web | Next.js 16 app in `apps/web`; `/` renders a static project-status page. |
 | API | ASP.NET Core 10 host in `apps/api`; it starts without exposing product routes. |
-| Backend | Four assembly boundaries under `src/backend`; no modules or persistence code yet. |
+| Backend | Eleven compiled module assemblies behind the existing technical layers; markers only, with no domain behavior or persistence. |
 | Local services | PostgreSQL 16.10, Redis 7.4.5, and Mailpit 1.27.4 in `compose.yaml`. |
-| Tests | One product-contract test plus web type-check, lint, and build checks. |
+| Tests | One product-contract test, two executable architecture rules, and web type-check, lint, and build checks. |
 | CI | Frontend, backend, and local Compose runtime are validated independently. |
 
 Registration, passwords, OTPs, social providers, passkeys, sessions, migrations, policy evaluation,
@@ -77,9 +77,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infra/docker/verify-local-st
 ```text
 apps/api/                       ASP.NET Core process
 apps/web/                       Next.js process
-src/backend/AuthNexus.*         backend assembly boundaries
-src/backend/Modules/            module map; no module code yet
-tests/                          unit/integration/security/e2e roots
+src/backend/AuthNexus.*         shared technical-layer assemblies
+src/backend/Modules/*/          eleven product-module class libraries
+tests/architecture/             compiled-module and project-graph checks
+tests/unit/                     product contract tests
+tests/integration|security|e2e  reserved test roots with scope notes
 infra/docker/                   local-stack verification
 docs/decisions/                 accepted architecture decisions
 docs/implementation-notes/      completed task records and test evidence
@@ -89,9 +91,9 @@ compose.yaml                    PostgreSQL, Redis, and Mailpit
 ## Release progress
 
 V0.1 is delivered as small, reviewable phases. Phase A established the repository and downstream
-mirror. Phase B established the local dependency stack. The next phase is the backend/module
-skeleton; it must not introduce authentication behavior early. No `v0.1.0` tag exists because the
-rest of V0.1 has not passed acceptance.
+mirror, Phase B established the local dependency stack, and Phase C established compile-time
+module boundaries. Phase D introduces the first domain model and invariants; persistence remains a
+later phase. No `v0.1.0` tag exists because the rest of V0.1 has not passed acceptance.
 
 The detailed phase ledger is in [docs/releases/v0.1.md](docs/releases/v0.1.md).
 
