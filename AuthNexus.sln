@@ -51,6 +51,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthNexus.Modules.Risk", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthNexus.Modules.Sessions", "src\backend\Modules\Sessions\AuthNexus.Modules.Sessions.csproj", "{E02DC5AD-4C67-4267-ABCA-D47A98A683EF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "architecture", "architecture", "{875CD587-DE2F-08EE-74FB-D6BE4E474EF3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthNexus.Architecture.Tests", "tests\architecture\AuthNexus.Architecture.Tests\AuthNexus.Architecture.Tests.csproj", "{66E5EECE-FD57-4509-A833-6DF07B520B57}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -265,6 +269,18 @@ Global
 		{E02DC5AD-4C67-4267-ABCA-D47A98A683EF}.Release|x64.Build.0 = Release|Any CPU
 		{E02DC5AD-4C67-4267-ABCA-D47A98A683EF}.Release|x86.ActiveCfg = Release|Any CPU
 		{E02DC5AD-4C67-4267-ABCA-D47A98A683EF}.Release|x86.Build.0 = Release|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Debug|x64.Build.0 = Debug|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Debug|x86.Build.0 = Debug|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|x64.ActiveCfg = Release|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|x64.Build.0 = Release|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|x86.ActiveCfg = Release|Any CPU
+		{66E5EECE-FD57-4509-A833-6DF07B520B57}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -291,5 +307,7 @@ Global
 		{FAC2B07B-09DC-418A-A315-F5776D2E6226} = {80AA2D47-A8A8-B250-956F-7C35AE84D60B}
 		{D02F90A6-C322-434D-842A-404B06BAD09D} = {80AA2D47-A8A8-B250-956F-7C35AE84D60B}
 		{E02DC5AD-4C67-4267-ABCA-D47A98A683EF} = {80AA2D47-A8A8-B250-956F-7C35AE84D60B}
+		{875CD587-DE2F-08EE-74FB-D6BE4E474EF3} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{66E5EECE-FD57-4509-A833-6DF07B520B57} = {875CD587-DE2F-08EE-74FB-D6BE4E474EF3}
 	EndGlobalSection
 EndGlobal

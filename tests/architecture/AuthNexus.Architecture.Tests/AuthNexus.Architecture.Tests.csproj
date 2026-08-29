@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\backend\Modules\Administration\AuthNexus.Modules.Administration.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Applications\AuthNexus.Modules.Applications.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Audit\AuthNexus.Modules.Audit.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Authentication\AuthNexus.Modules.Authentication.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Identity\AuthNexus.Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Notifications\AuthNexus.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Policies\AuthNexus.Modules.Policies.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Recovery\AuthNexus.Modules.Recovery.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Registration\AuthNexus.Modules.Registration.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Risk\AuthNexus.Modules.Risk.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\Modules\Sessions\AuthNexus.Modules.Sessions.csproj" />
+  </ItemGroup>
+
+</Project>
