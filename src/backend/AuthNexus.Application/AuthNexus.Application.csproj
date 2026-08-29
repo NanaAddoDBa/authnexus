@@ -3,6 +3,17 @@
   <ItemGroup>
     <ProjectReference Include="..\AuthNexus.Contracts\AuthNexus.Contracts.csproj" />
     <ProjectReference Include="..\AuthNexus.Domain\AuthNexus.Domain.csproj" />
+    <ProjectReference Include="..\Modules\Administration\AuthNexus.Modules.Administration.csproj" />
+    <ProjectReference Include="..\Modules\Applications\AuthNexus.Modules.Applications.csproj" />
+    <ProjectReference Include="..\Modules\Audit\AuthNexus.Modules.Audit.csproj" />
+    <ProjectReference Include="..\Modules\Authentication\AuthNexus.Modules.Authentication.csproj" />
+    <ProjectReference Include="..\Modules\Identity\AuthNexus.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Modules\Notifications\AuthNexus.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\Modules\Policies\AuthNexus.Modules.Policies.csproj" />
+    <ProjectReference Include="..\Modules\Recovery\AuthNexus.Modules.Recovery.csproj" />
+    <ProjectReference Include="..\Modules\Registration\AuthNexus.Modules.Registration.csproj" />
+    <ProjectReference Include="..\Modules\Risk\AuthNexus.Modules.Risk.csproj" />
+    <ProjectReference Include="..\Modules\Sessions\AuthNexus.Modules.Sessions.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
