@@ -78,6 +78,60 @@ claim that behavior: no runtime workflow or persistence path calls these methods
 SecurityEvent and persistence work must make audit emission atomic with the persisted transition
 before an endpoint or administrative operation can change account state.
 
+## D.3 AuthenticationTransaction
+
+`AuthenticationTransaction` belongs to `AuthNexus.Modules.Authentication`. Its strong
+`AuthenticationTransactionId` and the shared `CorrelationId` live in `AuthNexus.Domain`, alongside
+the existing application, tenant, and user identifiers consumed by this boundary. Authentication
+therefore references Domain without referencing Applications or Identity.
+
+The D.3 aggregate stores:
+
+- `TransactionId`;
+- `ApplicationId` and optional `TenantId`;
+- optional `UserId` for a workflow whose user is already known at creation;
+- one of the 14 explicit `Purpose` values;
+- `CorrelationId`;
+- `State`;
+- `CreatedAt`, `ExpiresAt`, and `StateChangedAt`;
+- optional `CompletedAt` and `FailedAt` terminal timestamps.
+
+Creation always starts in `Initiated`. IDs must be non-default, a supplied tenant or user ID cannot
+be its default value, the purpose must be defined, and creation/expiry times are normalized to UTC.
+`ExpiresAt` must be later than `CreatedAt`.
+
+### Legal D.3 transitions
+
+| Operation | Required state | Resulting state |
+| --- | --- | --- |
+| `IssueChallenge` | `Initiated` | `ChallengeIssued` |
+| `MarkPrimaryVerified` | `Initiated` or `ChallengeIssued` | `PrimaryVerified` |
+| `RequireStepUp` | `PrimaryVerified` | `StepUpRequired` |
+| `Complete` | `PrimaryVerified` or `StepUpRequired` | `Completed` |
+| `Fail` | Any live state | `Failed` |
+| `Cancel` | Any live state | `Cancelled` |
+| `Expire` | Any live state, at or after the deadline | `Expired` |
+
+The four live states are `Initiated`, `ChallengeIssued`, `PrimaryVerified`, and `StepUpRequired`.
+The other four are terminal. Across eight states and seven operations, 18 pairs are legal and all
+38 other pairs are rejected without changing `State`, `StateChangedAt`, `CompletedAt`, or
+`FailedAt`.
+
+The usable interval is `CreatedAt <= occurredAt < ExpiresAt`. A normal transition at or after the
+deadline throws `AuthenticationTransactionExpiredException`; explicit expiry is rejected before
+the deadline and accepted at or after it. Completion sets only `CompletedAt`, failure sets only
+`FailedAt`, and cancellation/expiry set neither. A completed or otherwise terminal transaction is
+not later converted to `Expired` merely because its original deadline passes.
+
+The direct `Initiated -> PrimaryVerified` path supports methods that do not need a separately
+persisted challenge. The entity does not verify evidence: a future Phase F orchestrator must prove
+primary or step-up evidence before invoking the corresponding lifecycle method.
+
+The full plan also names requested return destination, selected method, identifier hash, required
+and achieved assurance, and risk result. Those remain deferred until their shared validation,
+method, policy, evidence, and risk contracts exist; D.3 does not freeze them as weak strings.
+Optional `UserId` is creation context only—there is no lookup, binding, or rebinding behavior.
+
 ## V0.1 vocabulary
 
 The V0.1 domain ledger is:
@@ -86,7 +140,7 @@ The V0.1 domain ledger is:
 | --- | --- | --- |
 | `ApplicationProfile` | Resolve the calling application's redirect and policy context. | D.1 foundation |
 | `UserAccount` | Internal identity root independent of login method. | D.2 foundation |
-| `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | No |
+| `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | D.3 foundation |
 | `Session` | Durable record behind an opaque browser cookie. | No |
 | `SecurityEvent` | Append-only security-relevant activity. | No |
 | `NotificationOutbox` | Commit notification work with the state change that produced it. | No |
@@ -96,7 +150,8 @@ identities in V0.4; passkeys in V0.5; TOTP and recovery codes in V0.6. Those mod
 pre-created in V0.1 without the behavior and tests that define them.
 
 There are no repositories, EF Core mappings, migrations, seeds, administrative commands, or HTTP
-representations. Those omissions are deliberate: D.1 and D.2 define valid in-memory state only.
+representations. Those omissions are deliberate: D.1 through D.3 define valid in-memory state
+only.
 
 ## Constraints carried into implementation
 

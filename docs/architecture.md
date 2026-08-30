@@ -35,8 +35,9 @@ AuthNexus.Application
 └── AuthNexus.Modules.* (eleven product modules)
 
 AuthNexus.Modules.Applications -> AuthNexus.Domain
+AuthNexus.Modules.Authentication -> AuthNexus.Domain
 AuthNexus.Modules.Identity     -> AuthNexus.Domain
-other nine modules             -> no project references
+other eight modules            -> no project references
 AuthNexus.Contracts            -> no project references
 AuthNexus.Domain               -> no project references
 ```
@@ -44,14 +45,17 @@ AuthNexus.Domain               -> no project references
 Each product module is a separate class-library assembly under `src/backend/Modules`. The
 application assembly is the cross-module orchestration boundary; modules do not reference one
 another, infrastructure, or the API. `Applications` depends on the shared Domain assembly for
-`ApplicationId` and `TenantId`; `Identity` does the same for `UserId`. No dependency was opened
-between product modules. Architecture tests compare the checked-in project files with this exact
-graph.
+`ApplicationId` and `TenantId`; `Identity` does the same for `UserId`; and `Authentication` uses
+those shared values plus `AuthenticationTransactionId` and `CorrelationId`. No dependency was
+opened between product modules. Architecture tests compare the checked-in project files with this
+exact graph.
 
 `AuthNexus.Modules.Applications` contains the in-memory `ApplicationProfile` foundation and
 redirect-value rules. `AuthNexus.Modules.Identity` contains the in-memory `UserAccount` state
-machine. The other nine module assemblies contain markers only. There are still no repositories,
-database mappings, dependency-injection registrations, runtime resolvers, or API routes.
+machine. `AuthNexus.Modules.Authentication` contains the in-memory, expiring
+`AuthenticationTransaction` lifecycle. The other eight module assemblies contain markers only.
+There are still no repositories, database mappings, dependency-injection registrations, runtime
+resolvers, or API routes.
 
 ## Chosen end-state shape
 
@@ -75,9 +79,10 @@ consumer redirect -> Next.js experience -> ASP.NET Core API
                   -> audit + outbox in PostgreSQL
 ```
 
-Profile construction, redirect allowlist membership, and account state transitions are executable
-domain behavior. The request path is not executable: no process loads a profile or account,
-resolves a policy, or accepts an authentication request yet.
+Profile construction, redirect allowlist membership, account transitions, and transaction
+lifecycle rules are executable domain behavior. The request path is not executable: no process
+loads a profile or account, creates or persists a transaction, resolves a policy, verifies
+evidence, or accepts an authentication request yet.
 
 ## Repository and mirror boundary
 
