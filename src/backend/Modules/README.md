@@ -22,7 +22,7 @@ dependencies do not allow any module to reach another product module, infrastruc
 | `AuthNexus.Modules.Policies` | Method eligibility and ordering, assurance, step-up, session rules, and policy versions. | Marker only. |
 | `AuthNexus.Modules.Risk` | Deterministic security signals, throttling inputs, provider health, and explainable risk results. | Marker only. |
 | `AuthNexus.Modules.Notifications` | Transactional email, SMS, WhatsApp, outbox delivery, retry, and delivery status. | Marker only. |
-| `AuthNexus.Modules.Audit` | Security and administrative events, correlation, actor/target relationships, and redaction. | Marker only. |
+| `AuthNexus.Modules.Audit` | Security and administrative events, correlation, actor/target relationships, and redaction. | Immutable `SecurityEvent`, 37 fixed machine event codes, six results, optional actor/target/application/tenant/session context, and bounded defensive metadata. No writer, storage, redaction pipeline, query, or endpoint. |
 | `AuthNexus.Modules.Administration` | Application, provider, policy, schema, branding, security-event, and rollout management. | Marker only. |
 
 The ownership column reserves a destination for later work. Only the code named in the final
@@ -50,7 +50,8 @@ AuthNexus.Modules.Applications -> AuthNexus.Domain
 AuthNexus.Modules.Authentication -> AuthNexus.Domain
 AuthNexus.Modules.Identity     -> AuthNexus.Domain
 AuthNexus.Modules.Sessions     -> AuthNexus.Domain
-other seven modules            -> no project references
+AuthNexus.Modules.Audit        -> AuthNexus.Domain
+other six modules              -> no project references
 AuthNexus.Contracts            -> no project references
 AuthNexus.Domain               -> no project references
 ```
@@ -61,6 +62,6 @@ does not match its assembly, a new production project is not declared, or any di
 reference differs from this graph. Changes to the graph therefore require an explicit test update
 in the same review.
 
-D.1 through D.4 add four in-memory entity boundaries. They add no repositories, database
+D.1 through D.5 add five in-memory entity boundaries. They add no repositories, database
 packages, provider adapters, dependency-injection registration, runtime lookup/orchestration, or
 HTTP endpoints.

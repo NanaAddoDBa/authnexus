@@ -169,6 +169,30 @@ network fields remain deferred until their evidence, policy, and privacy contrac
 generation/hash derivation, cookies, middleware, lookup, logout orchestration, persistence, and
 endpoints remain Phase E/G work rather than D.4 behavior.
 
+## D.5 SecurityEvent
+
+`SecurityEvent` belongs to `AuthNexus.Modules.Audit` and is immutable after construction. It stores
+its Audit-owned event ID, UTC timestamp, one of 37 fixed machine event types, one of six declared
+results, optional actor/target/application/tenant/session context, required correlation identity,
+optional bounded network and user-agent summaries, and immutable bounded metadata.
+
+Tenant context is an explicit AuthNexus extension to the plan's abbreviated event list. It carries
+the scope already established by the application profile, transaction, and session; it neither
+resolves nor authorizes a tenant.
+
+The type codes reproduce Plan 1's catalogue from `registration_requested` through
+`provider_unavailable`. The plan names a `Result` field but no vocabulary, so D.5 explicitly adopts
+`Succeeded`, `Failed`, `Denied`, `Throttled`, `Cancelled`, and `Informational`. It deliberately
+defines no type/result compatibility matrix before the producers exist.
+
+Metadata is copied, read-only, limited to 32 canonical keys and 512 characters per value, and
+rejects control/Unicode separator/format characters, duplicates, and separator-aware sensitive
+keys. This is not the Phase I redaction pipeline: safe-looking keys can still carry unsafe values,
+so future trusted builders and serialized-output tests remain mandatory.
+
+“Append-only” in D.5 means the in-memory event has no mutation surface. No event is persisted,
+queried, emitted, retained, or transactionally coupled to a D.1-D.4 state change yet.
+
 ## V0.1 vocabulary
 
 The V0.1 domain ledger is:
@@ -179,7 +203,7 @@ The V0.1 domain ledger is:
 | `UserAccount` | Internal identity root independent of login method. | D.2 foundation |
 | `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | D.3 foundation |
 | `Session` | Durable record behind an opaque browser cookie. | D.4 foundation |
-| `SecurityEvent` | Append-only security-relevant activity. | No |
+| `SecurityEvent` | Append-only security-relevant activity. | D.5 foundation |
 | `NotificationOutbox` | Commit notification work with the state change that produced it. | No |
 
 Password credentials arrive in V0.2; OTP challenges and delivery records in V0.3; external
@@ -187,7 +211,7 @@ identities in V0.4; passkeys in V0.5; TOTP and recovery codes in V0.6. Those mod
 pre-created in V0.1 without the behavior and tests that define them.
 
 There are no repositories, EF Core mappings, migrations, seeds, administrative commands, or HTTP
-representations. Those omissions are deliberate: D.1 through D.4 define valid in-memory state
+representations. Those omissions are deliberate: D.1 through D.5 define valid in-memory state
 only.
 
 ## Constraints carried into implementation
