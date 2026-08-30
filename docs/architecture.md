@@ -37,25 +37,25 @@ AuthNexus.Application
 AuthNexus.Modules.Applications -> AuthNexus.Domain
 AuthNexus.Modules.Authentication -> AuthNexus.Domain
 AuthNexus.Modules.Identity     -> AuthNexus.Domain
-other eight modules            -> no project references
+AuthNexus.Modules.Sessions     -> AuthNexus.Domain
+AuthNexus.Modules.Audit        -> AuthNexus.Domain
+AuthNexus.Modules.Notifications -> AuthNexus.Domain
+other five modules             -> no project references
 AuthNexus.Contracts            -> no project references
 AuthNexus.Domain               -> no project references
 ```
 
 Each product module is a separate class-library assembly under `src/backend/Modules`. The
 application assembly is the cross-module orchestration boundary; modules do not reference one
-another, infrastructure, or the API. `Applications` depends on the shared Domain assembly for
-`ApplicationId` and `TenantId`; `Identity` does the same for `UserId`; and `Authentication` uses
-those shared values plus `AuthenticationTransactionId` and `CorrelationId`. No dependency was
-opened between product modules. Architecture tests compare the checked-in project files with this
-exact graph.
+another, infrastructure, or the API. The six concrete Phase D modules depend inward on Domain for
+the shared identifiers their records need. No dependency was opened between product modules.
+Architecture tests compare the checked-in project files with this exact graph.
 
-`AuthNexus.Modules.Applications` contains the in-memory `ApplicationProfile` foundation and
-redirect-value rules. `AuthNexus.Modules.Identity` contains the in-memory `UserAccount` state
-machine. `AuthNexus.Modules.Authentication` contains the in-memory, expiring
-`AuthenticationTransaction` lifecycle. The other eight module assemblies contain markers only.
-There are still no repositories, database mappings, dependency-injection registrations, runtime
-resolvers, or API routes.
+Applications owns `ApplicationProfile`; Identity owns `UserAccount`; Authentication owns the
+expiring `AuthenticationTransaction`; Sessions owns the server-side session record; Audit owns
+immutable `SecurityEvent`; and Notifications owns the protected outbox message and delivery-state
+record. The other five module assemblies contain markers only. There are still no repositories,
+database mappings, dependency-injection registrations, runtime resolvers, workers, or API routes.
 
 ## Chosen end-state shape
 
@@ -79,10 +79,11 @@ consumer redirect -> Next.js experience -> ASP.NET Core API
                   -> audit + outbox in PostgreSQL
 ```
 
-Profile construction, redirect allowlist membership, account transitions, and transaction
-lifecycle rules are executable domain behavior. The request path is not executable: no process
-loads a profile or account, creates or persists a transaction, resolves a policy, verifies
-evidence, or accepts an authentication request yet.
+Profile construction, redirect allowlist membership, account/transaction/session lifecycle,
+immutable event construction, and outbox delivery-state rules are executable domain behavior. The
+request path is not executable: no process loads a profile or account, creates or persists a
+transaction, resolves a policy, verifies evidence, issues a cookie, writes an event/outbox row, or
+accepts an authentication request yet.
 
 ## Repository and mirror boundary
 

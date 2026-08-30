@@ -24,15 +24,17 @@ while AuthNexus owns the security-sensitive workflow.
 
 ## Current evidence
 
-Through D.5, the code can build the web and API processes, start PostgreSQL, Redis, and Mailpit
+Through D.6, the code can build the web and API processes, start PostgreSQL, Redis, and Mailpit
 locally, construct an `ApplicationProfile` that rejects unsafe or incomplete configuration,
 exercise the legal `UserAccount` state transitions, and construct an expiring
 `AuthenticationTransaction` whose 18 legal and 38 forbidden state/action pairs are executable in
 memory. It can also exercise a Session record's idle/absolute lifetime, stored-verifier rotation,
 revocation, and expiry rules without accepting a raw cookie secret. It can construct an immutable
 SecurityEvent using the fixed 37-code catalogue, six explicit outcomes, application/tenant/session
-context, and bounded defensive metadata. No running process loads or stores these models, creates
-a transaction, issues or validates a session, or writes an audit event. There is still
-no login identifier, credential, challenge verification, cookie, authentication endpoint, or
-provider callback. Later-flow documents remain design inputs until corresponding code and tests
-exist.
+context, and bounded defensive metadata. Finally, it can construct a protected notification
+envelope and record due delivery, retry, success, or permanent failure through six legal
+state/action pairs. No running process loads or stores these models, creates a transaction, issues
+or validates a session, writes an audit event, or delivers an outbox message. There is still no
+login identifier, credential, challenge verification, cookie, authentication endpoint, provider
+adapter, worker, or callback. Later-flow documents remain design inputs until corresponding code
+and tests exist.

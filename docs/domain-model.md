@@ -193,6 +193,28 @@ so future trusted builders and serialized-output tests remain mandatory.
 “Append-only” in D.5 means the in-memory event has no mutation surface. No event is persisted,
 queried, emitted, retained, or transactionally coupled to a D.1-D.4 state change yet.
 
+## D.6 NotificationOutboxMessage
+
+`NotificationOutboxMessage` belongs to `AuthNexus.Modules.Notifications`. It records notification
+work accepted for later delivery, not a provider request already sent. The record carries its own
+message identity, required correlation identity, optional target user/application/tenant context,
+a machine notification type, one of three channels, a redacted destination value, an
+already-protected payload, and UTC creation/availability/lifecycle times.
+
+Creation starts in `Pending` with zero attempts and `NextAttemptAt = AvailableAt`. An attempt is
+due at or after that timestamp. `RecordDelivered`, `ScheduleRetry`, and `FailPermanently` are each
+legal from `Pending` and `RetryScheduled`: six accepted state/action pairs. The same actions are
+forbidden from `Delivered` and `PermanentlyFailed`: six rejected pairs. A retry must be scheduled
+strictly after its failed attempt; accepted outcomes increment the attempt count exactly once and
+keep terminal timestamps mutually exclusive.
+
+The clear destination has no public `Value` getter. A future provider adapter must call the
+explicit `RevealForDelivery()` method; display and ordinary JSON serialization remain redacted.
+The payload makes defensive byte copies and exposes only explicit copy-for-delivery access. These
+are in-memory disclosure boundaries, not a claim of encryption or safe persistence. Destination
+protection, atomic outbox writes, worker claims, retry policy, templates, providers, receipts, and
+replay remain Phase E/J work.
+
 ## V0.1 vocabulary
 
 The V0.1 domain ledger is:
@@ -204,14 +226,14 @@ The V0.1 domain ledger is:
 | `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | D.3 foundation |
 | `Session` | Durable record behind an opaque browser cookie. | D.4 foundation |
 | `SecurityEvent` | Append-only security-relevant activity. | D.5 foundation |
-| `NotificationOutbox` | Commit notification work with the state change that produced it. | No |
+| `NotificationOutboxMessage` | Record notification work that must later commit with its originating state change. | D.6 foundation |
 
 Password credentials arrive in V0.2; OTP challenges and delivery records in V0.3; external
 identities in V0.4; passkeys in V0.5; TOTP and recovery codes in V0.6. Those models should not be
 pre-created in V0.1 without the behavior and tests that define them.
 
 There are no repositories, EF Core mappings, migrations, seeds, administrative commands, or HTTP
-representations. Those omissions are deliberate: D.1 through D.5 define valid in-memory state
+representations. Those omissions are deliberate: D.1 through D.6 define valid in-memory state
 only.
 
 ## Constraints carried into implementation

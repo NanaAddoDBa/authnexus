@@ -5,9 +5,10 @@ assembly is the compile-time ownership boundary. Modules cannot reference one an
 cross-module workflows will be coordinated from `AuthNexus.Application`.
 
 All eleven assemblies retain a `ModuleAssemblyMarker` for catalog verification. Applications,
-Identity, and Authentication now contain domain code. Each references the dependency-free
-`AuthNexus.Domain` assembly for identifiers that later modules must share. Those narrow inward
-dependencies do not allow any module to reach another product module, infrastructure, or the API.
+Identity, Authentication, Sessions, Audit, and Notifications now contain Phase D domain code.
+Each references the dependency-free `AuthNexus.Domain` assembly for identifiers that later modules
+must share. Those narrow inward dependencies do not allow any module to reach another product
+module, infrastructure, or the API.
 
 ## Current module map
 
@@ -21,7 +22,7 @@ dependencies do not allow any module to reach another product module, infrastruc
 | `AuthNexus.Modules.Recovery` | Password reset, factor recovery or replacement, recovery codes, and session consequences. | Marker only. |
 | `AuthNexus.Modules.Policies` | Method eligibility and ordering, assurance, step-up, session rules, and policy versions. | Marker only. |
 | `AuthNexus.Modules.Risk` | Deterministic security signals, throttling inputs, provider health, and explainable risk results. | Marker only. |
-| `AuthNexus.Modules.Notifications` | Transactional email, SMS, WhatsApp, outbox delivery, retry, and delivery status. | Marker only. |
+| `AuthNexus.Modules.Notifications` | Transactional email, SMS, WhatsApp, outbox delivery, retry, and delivery status. | `NotificationOutboxMessage`, protected payload bytes, explicitly revealed/redacted destination, four states, three channels, and due/retry/terminal-result rules. No store, worker, provider, lease, or retry policy. |
 | `AuthNexus.Modules.Audit` | Security and administrative events, correlation, actor/target relationships, and redaction. | Immutable `SecurityEvent`, 37 fixed machine event codes, six results, optional actor/target/application/tenant/session context, and bounded defensive metadata. No writer, storage, redaction pipeline, query, or endpoint. |
 | `AuthNexus.Modules.Administration` | Application, provider, policy, schema, branding, security-event, and rollout management. | Marker only. |
 
@@ -51,7 +52,8 @@ AuthNexus.Modules.Authentication -> AuthNexus.Domain
 AuthNexus.Modules.Identity     -> AuthNexus.Domain
 AuthNexus.Modules.Sessions     -> AuthNexus.Domain
 AuthNexus.Modules.Audit        -> AuthNexus.Domain
-other six modules              -> no project references
+AuthNexus.Modules.Notifications -> AuthNexus.Domain
+other five modules             -> no project references
 AuthNexus.Contracts            -> no project references
 AuthNexus.Domain               -> no project references
 ```
@@ -62,6 +64,6 @@ does not match its assembly, a new production project is not declared, or any di
 reference differs from this graph. Changes to the graph therefore require an explicit test update
 in the same review.
 
-D.1 through D.5 add five in-memory entity boundaries. They add no repositories, database
-packages, provider adapters, dependency-injection registration, runtime lookup/orchestration, or
+D.1 through D.6 add six in-memory domain boundaries. They add no repositories, database packages,
+provider adapters, workers, dependency-injection registration, runtime lookup/orchestration, or
 HTTP endpoints.

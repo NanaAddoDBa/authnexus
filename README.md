@@ -1,9 +1,9 @@
 # AuthNexus
 
 AuthNexus is a standalone identity and authentication platform. This repository is still in V0.1:
-it has a buildable web/API skeleton, a working local dependency stack, and the first application,
-identity, and authentication-transaction domain models. It still has no login endpoint, database
-tables, or runtime profile, account, or transaction orchestration.
+it has a buildable web/API skeleton, a working local dependency stack, and all six Phase D
+in-memory domain foundations. It still has no login endpoint, database tables, or runtime
+authentication orchestration.
 
 ## What works today
 
@@ -11,15 +11,15 @@ tables, or runtime profile, account, or transaction orchestration.
 | --- | --- |
 | Web | Next.js 16 app in `apps/web`; `/` renders a static project-status page. |
 | API | ASP.NET Core 10 host in `apps/api`; it starts without exposing product routes. |
-| Backend | Eleven compiled module assemblies. `Applications` owns `ApplicationProfile`; `Identity` owns `UserAccount`; `Authentication` owns the expiring `AuthenticationTransaction` state machine. The other eight modules still contain markers only. There is no persistence or runtime orchestration. |
+| Backend | Eleven compiled module assemblies. Applications, Identity, Authentication, Sessions, Audit, and Notifications own the six Phase D records and invariants; the other five modules still contain markers only. There is no persistence or runtime orchestration. |
 | Local services | PostgreSQL 16.10, Redis 7.4.5, and Mailpit 1.27.4 in `compose.yaml`. |
-| Tests | One product-contract test, 34 application-profile tests, 46 user-account tests, 116 authentication-transaction tests, two executable architecture rules, and web type-check, lint, and build checks. |
+| Tests | 453 backend cases cover the product contract, all six Phase D boundaries, and two executable architecture rules; the web has type-check, lint, and build checks. |
 | CI | Frontend, backend, and local Compose runtime are validated independently. |
 
 Application/account/transaction loading, login identifiers, registration, passwords, OTPs,
-social providers, passkeys, sessions, migrations, policy evaluation, transaction orchestration,
-and production deployment are not implemented. The documents under `docs/` distinguish current
-code from later work.
+social providers, passkeys, database mappings, cookie handling, policy evaluation, transaction
+orchestration, notification delivery, and production deployment are not implemented. The
+documents under `docs/` distinguish current code from later work.
 
 ## Start the local dependencies
 
@@ -82,7 +82,7 @@ apps/web/                       Next.js process
 src/backend/AuthNexus.*         shared technical-layer assemblies
 src/backend/Modules/*/          eleven product-module class libraries
 tests/architecture/             compiled-module and project-graph checks
-tests/unit/                     product, ApplicationProfile, UserAccount, and transaction tests
+tests/unit/                     product and Phase D domain-boundary tests
 tests/integration|security|e2e  reserved test roots with scope notes
 infra/docker/                   local-stack verification
 docs/decisions/                 accepted architecture decisions
@@ -93,13 +93,11 @@ compose.yaml                    PostgreSQL, Redis, and Mailpit
 ## Release progress
 
 V0.1 is delivered as small, reviewable phases. Phases A through C established the repository,
-local dependencies, and compile-time module boundaries. D.1 supplies the `ApplicationProfile`
-foundation, D.2 supplies the `UserAccount` state model, and D.3 supplies the expiring central
-transaction lifecycle. D.4 adds the server-side Session record's half-open lifetime, verifier
-rotation, revocation, and expiry rules without issuing a cookie. D.5 adds the immutable 37-type
-SecurityEvent record with bounded metadata without claiming an audit store. Phase D remains open
-only for the NotificationOutbox boundary. Persistence
-remains Phase E work. No `v0.1.0` tag exists because the rest of V0.1 has not passed acceptance.
+local dependencies, and compile-time module boundaries. Phase D now defines `ApplicationProfile`,
+`UserAccount`, `AuthenticationTransaction`, `Session`, immutable `SecurityEvent`, and the protected
+`NotificationOutboxMessage` delivery-state record. These are in-memory contracts, not running
+authentication capability. Persistence remains Phase E work and has not started. No `v0.1.0` tag
+exists because the rest of V0.1 has not passed acceptance.
 
 The detailed phase ledger is in [docs/releases/v0.1.md](docs/releases/v0.1.md).
 

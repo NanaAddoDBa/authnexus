@@ -6,6 +6,8 @@ or persists one. D.4 provides an in-memory Session lifetime and revocation recor
 generate a secret, set a cookie, look up a record, or authenticate a request.
 The D.5 `SecurityEvent` is also not wired to these lifecycle methods; no successful or rejected
 operation emits or persists an event yet.
+The D.6 `NotificationOutboxMessage` can record delivery outcomes in memory, but no workflow writes
+one, no database commits one beside a state change, and no worker sends it.
 `apps/api/Program.cs` builds and runs an empty ASP.NET Core host;
 `apps/web/src/app/page.tsx` renders project status. No endpoint accepts an identifier, password,
 OTP, provider callback, transaction ID, or session cookie.
