@@ -12,6 +12,7 @@
 | ApplicationProfile tests | `dotnet test tests/unit/AuthNexus.Modules.Applications.Tests --configuration Release` | 34 cases cover profile construction, strong identifiers, enum guards, locale normalization, redirect safety, canonical matching, collection copying, and duplicate rejection. |
 | UserAccount tests | `dotnet test tests/unit/AuthNexus.Modules.Identity.Tests --configuration Release` | 46 cases cover account creation, all seven legal transitions, all 35 forbidden state/action pairs, UTC chronology, terminal deletion, and rejection without mutation. |
 | AuthenticationTransaction tests | `dotnet test tests/unit/AuthNexus.Modules.Authentication.Tests --configuration Release` | 116 cases protect the 14-purpose vocabulary, all 18 legal and 38 forbidden state/action pairs, application/tenant/user/correlation context, UTC chronology, exact and late expiry, terminal timestamps, replay rejection, and non-mutation. |
+| Session tests | `dotnet test tests/unit/AuthNexus.Modules.Sessions.Tests --configuration Release` | 65 cases protect identity/context, canonical fixed hash representation including pad bits, three states, ten revocation reasons, lifetime construction, half-open usability, activity, rotation, revocation, idle/absolute expiry, all 12 state/action pairs, UTC chronology, and rejection snapshots. |
 | Architecture tests | `dotnet test tests/architecture/AuthNexus.Architecture.Tests --configuration Release` | Every required module has a compiled marker and direct production project references match the approved graph. |
 | Compose model | `docker compose config --quiet` | Interpolation and Compose structure are valid. |
 | Local dependencies | `infra/docker/verify-local-stack.ps1` | Containers are healthy; PostgreSQL accepts a query, Redis accepts an authenticated command, and Mailpit is ready. |
@@ -37,6 +38,13 @@ hosted Linux backend job is therefore the whole-suite acceptance result when tha
 D.3, all 116 transaction and both architecture cases passed in focused local runs. Subsequent
 whole-suite attempts were blocked while loading first the unchanged Identity assembly and then
 copied Authentication assemblies (`0x800711C7`).
+
+During D.4, the initial 62 Session cases passed locally. A review then added two canonical
+base64url pad-bit rejection cases. The updated test project builds, but Application Control now
+blocks loading its copied module assembly; hosted Linux CI is the execution gate for the final
+65-case matrix. The updated architecture project and all thirteen of its referenced production
+projects also compiled before the same policy blocked its test assembly. The security control is
+not disabled.
 
 Each authentication capability must later cover its success path, ordinary rejection, expiry,
 replay, enumeration behavior, concurrency, audit output, session effect, and log redaction. Those

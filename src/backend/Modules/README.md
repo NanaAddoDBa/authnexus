@@ -17,7 +17,7 @@ dependencies do not allow any module to reach another product module, infrastruc
 | `AuthNexus.Modules.Identity` | Accounts, identifiers, credentials, external identities, linking, and account lifecycle. | `UserAccount`, six explicit states, seven legal transitions, and transition-specific rejection. No login identifiers, credentials, resolver, or storage. |
 | `AuthNexus.Modules.Authentication` | Authentication transactions, challenges, method coordination, and evidence verification. | `AuthenticationTransaction`, 14 purposes, eight states, seven named operations, lifetime enforcement, and transition-specific rejection. No challenge/evidence verification, orchestrator, or storage. |
 | `AuthNexus.Modules.Registration` | Pending registration, schema-driven fields, terms acceptance, and completion. | Marker only. |
-| `AuthNexus.Modules.Sessions` | Session issue, rotation, expiry, revocation, logout, and authentication evidence. | Marker only. |
+| `AuthNexus.Modules.Sessions` | Session issue, rotation, expiry, revocation, logout, and authentication evidence. | `Session`, a redacted stored-verifier value, three states, ten revocation reasons, activity/rotation/revocation/expiry rules, and half-open lifetime checks. No cookie, secret generator, middleware, lookup, or storage. |
 | `AuthNexus.Modules.Recovery` | Password reset, factor recovery or replacement, recovery codes, and session consequences. | Marker only. |
 | `AuthNexus.Modules.Policies` | Method eligibility and ordering, assurance, step-up, session rules, and policy versions. | Marker only. |
 | `AuthNexus.Modules.Risk` | Deterministic security signals, throttling inputs, provider health, and explainable risk results. | Marker only. |
@@ -49,7 +49,8 @@ AuthNexus.Application
 AuthNexus.Modules.Applications -> AuthNexus.Domain
 AuthNexus.Modules.Authentication -> AuthNexus.Domain
 AuthNexus.Modules.Identity     -> AuthNexus.Domain
-other eight modules            -> no project references
+AuthNexus.Modules.Sessions     -> AuthNexus.Domain
+other seven modules            -> no project references
 AuthNexus.Contracts            -> no project references
 AuthNexus.Domain               -> no project references
 ```
@@ -60,6 +61,6 @@ does not match its assembly, a new production project is not declared, or any di
 reference differs from this graph. Changes to the graph therefore require an explicit test update
 in the same review.
 
-D.1 through D.3 add three in-memory entity boundaries. They add no repositories, database
+D.1 through D.4 add four in-memory entity boundaries. They add no repositories, database
 packages, provider adapters, dependency-injection registration, runtime lookup/orchestration, or
 HTTP endpoints.

@@ -132,6 +132,43 @@ and achieved assurance, and risk result. Those remain deferred until their share
 method, policy, evidence, and risk contracts exist; D.3 does not freeze them as weak strings.
 Optional `UserId` is creation context only—there is no lookup, binding, or rebinding behavior.
 
+## D.4 Session
+
+`Session` belongs to `AuthNexus.Modules.Sessions`. Its `SessionId` lives in the shared Domain
+assembly because the audit boundary needs to reference a session without depending on the
+Sessions module. The entity stores only an already-derived `SessionSecretHash`; it never accepts a
+raw browser secret.
+
+The D.4 record contains session, user, application, and optional tenant identity; authentication
+and creation timestamps; last-seen, idle-expiry, and absolute-expiry timestamps; verifier-rotation
+time and count; current state; global/state-change timestamps; and mutually exclusive revocation
+or expiry terminal data. Optional tenant context is an explicit AuthNexus extension to the plan's
+abbreviated session list so later authorization cannot lose the scope already resolved by the
+application profile and transaction.
+
+Creation enforces `AuthenticatedAt <= CreatedAt < IdleExpiresAt <= AbsoluteExpiresAt` and starts in
+`Active`. The usable interval is `CreatedAt <= observedAt < min(IdleExpiresAt,
+AbsoluteExpiresAt)`. `CanBeUsedAt` applies that rule without waiting for or performing an `Expired`
+state mutation.
+
+| Operation | Required state/time | Result |
+| --- | --- | --- |
+| `RecordActivity` | Active and before effective expiry | Advances last-seen time and a non-shortening idle deadline capped by absolute expiry. |
+| `RotateSecretHash` | Active and before effective expiry | Replaces a distinct stored verifier and increments the rotation count in place. |
+| `Revoke` | Active | `Revoked`, preserving the first timestamp and machine reason. |
+| `Revoke` | Revoked | Idempotent no-op. |
+| `Expire` | Active and at/after effective expiry | `Expired`. |
+
+Revocation may record a reason even after an active record's deadlines have elapsed because it can
+only remove access; activity and rotation still fail at the deadline. `Revoked` is never later
+overwritten by `Expired`. All operation times are UTC-normalized and globally nondecreasing, and
+rejection cannot partially alter lifecycle state.
+
+The full plan's assurance, authentication-method, MFA, reauthentication, device, user-agent, and
+network fields remain deferred until their evidence, policy, and privacy contracts exist. Secret
+generation/hash derivation, cookies, middleware, lookup, logout orchestration, persistence, and
+endpoints remain Phase E/G work rather than D.4 behavior.
+
 ## V0.1 vocabulary
 
 The V0.1 domain ledger is:
@@ -141,7 +178,7 @@ The V0.1 domain ledger is:
 | `ApplicationProfile` | Resolve the calling application's redirect and policy context. | D.1 foundation |
 | `UserAccount` | Internal identity root independent of login method. | D.2 foundation |
 | `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | D.3 foundation |
-| `Session` | Durable record behind an opaque browser cookie. | No |
+| `Session` | Durable record behind an opaque browser cookie. | D.4 foundation |
 | `SecurityEvent` | Append-only security-relevant activity. | No |
 | `NotificationOutbox` | Commit notification work with the state change that produced it. | No |
 
@@ -150,7 +187,7 @@ identities in V0.4; passkeys in V0.5; TOTP and recovery codes in V0.6. Those mod
 pre-created in V0.1 without the behavior and tests that define them.
 
 There are no repositories, EF Core mappings, migrations, seeds, administrative commands, or HTTP
-representations. Those omissions are deliberate: D.1 through D.3 define valid in-memory state
+representations. Those omissions are deliberate: D.1 through D.4 define valid in-memory state
 only.
 
 ## Constraints carried into implementation

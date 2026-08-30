@@ -95,7 +95,9 @@ compose.yaml                    PostgreSQL, Redis, and Mailpit
 V0.1 is delivered as small, reviewable phases. Phases A through C established the repository,
 local dependencies, and compile-time module boundaries. D.1 supplies the `ApplicationProfile`
 foundation, D.2 supplies the `UserAccount` state model, and D.3 supplies the expiring central
-transaction lifecycle. Phase D remains open for the other three V0.1 domain concepts. Persistence
+transaction lifecycle. D.4 adds the server-side Session record's half-open lifetime, verifier
+rotation, revocation, and expiry rules without issuing a cookie. Phase D remains open for the
+SecurityEvent and NotificationOutbox boundaries. Persistence
 remains Phase E work. No `v0.1.0` tag exists because the rest of V0.1 has not passed acceptance.
 
 The detailed phase ledger is in [docs/releases/v0.1.md](docs/releases/v0.1.md).
