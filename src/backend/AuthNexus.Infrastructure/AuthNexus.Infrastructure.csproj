@@ -4,6 +4,22 @@
     <ProjectReference Include="..\AuthNexus.Application\AuthNexus.Application.csproj" />
     <ProjectReference Include="..\AuthNexus.Contracts\AuthNexus.Contracts.csproj" />
     <ProjectReference Include="..\AuthNexus.Domain\AuthNexus.Domain.csproj" />
+    <ProjectReference Include="..\Modules\Applications\AuthNexus.Modules.Applications.csproj" />
+    <ProjectReference Include="..\Modules\Audit\AuthNexus.Modules.Audit.csproj" />
+    <ProjectReference Include="..\Modules\Authentication\AuthNexus.Modules.Authentication.csproj" />
+    <ProjectReference Include="..\Modules\Identity\AuthNexus.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Modules\Notifications\AuthNexus.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\Modules\Sessions\AuthNexus.Modules.Sessions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
 
   <PropertyGroup>
