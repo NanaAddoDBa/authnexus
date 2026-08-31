@@ -152,6 +152,102 @@ public sealed class NotificationOutboxMessage
             normalizedAvailableAt);
     }
 
+    internal static NotificationOutboxMessage Restore(
+        NotificationOutboxMessageId messageId,
+        CorrelationId correlationId,
+        UserId? targetUserId,
+        ApplicationId? applicationId,
+        TenantId? tenantId,
+        NotificationType notificationType,
+        NotificationChannel channel,
+        NotificationDestination destination,
+        ProtectedNotificationPayload protectedPayload,
+        DateTimeOffset createdAt,
+        DateTimeOffset availableAt,
+        NotificationOutboxState state,
+        DateTimeOffset stateChangedAt,
+        int attemptCount,
+        DateTimeOffset? lastAttemptedAt,
+        DateTimeOffset? nextAttemptAt,
+        DateTimeOffset? deliveredAt,
+        DateTimeOffset? permanentlyFailedAt,
+        NotificationDeliveryFailureCode? lastFailureCode)
+    {
+        if (!Enum.IsDefined(state))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(state),
+                state,
+                "The notification outbox state is not defined.");
+        }
+
+        if (attemptCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(attemptCount),
+                attemptCount,
+                "The notification attempt count cannot be negative.");
+        }
+
+        var message = Create(
+            messageId,
+            correlationId,
+            targetUserId,
+            applicationId,
+            tenantId,
+            notificationType,
+            channel,
+            destination,
+            protectedPayload,
+            createdAt,
+            availableAt);
+
+        var normalizedStateChangedAt = NormalizeTimestamp(
+            stateChangedAt,
+            nameof(stateChangedAt));
+        var normalizedLastAttemptedAt = NormalizeOptionalTimestamp(
+            lastAttemptedAt,
+            nameof(lastAttemptedAt));
+        var normalizedNextAttemptAt = NormalizeOptionalTimestamp(
+            nextAttemptAt,
+            nameof(nextAttemptAt));
+        var normalizedDeliveredAt = NormalizeOptionalTimestamp(deliveredAt, nameof(deliveredAt));
+        var normalizedPermanentlyFailedAt = NormalizeOptionalTimestamp(
+            permanentlyFailedAt,
+            nameof(permanentlyFailedAt));
+
+        if (normalizedStateChangedAt < message.CreatedAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(stateChangedAt),
+                stateChangedAt,
+                "The stored state change cannot precede message creation.");
+        }
+
+        ValidateRestoredDeliveryState(
+            message.CreatedAt,
+            message.AvailableAt,
+            state,
+            normalizedStateChangedAt,
+            attemptCount,
+            normalizedLastAttemptedAt,
+            normalizedNextAttemptAt,
+            normalizedDeliveredAt,
+            normalizedPermanentlyFailedAt,
+            lastFailureCode);
+
+        message.State = state;
+        message.StateChangedAt = normalizedStateChangedAt;
+        message.AttemptCount = attemptCount;
+        message.LastAttemptedAt = normalizedLastAttemptedAt;
+        message.NextAttemptAt = normalizedNextAttemptAt;
+        message.DeliveredAt = normalizedDeliveredAt;
+        message.PermanentlyFailedAt = normalizedPermanentlyFailedAt;
+        message.LastFailureCode = lastFailureCode;
+
+        return message;
+    }
+
     public bool CanBeAttemptedAt(DateTimeOffset observedAt)
     {
         var normalizedObservedAt = NormalizeTimestamp(observedAt, nameof(observedAt));
@@ -327,5 +423,66 @@ public sealed class NotificationOutboxMessage
         }
 
         return timestamp.ToUniversalTime();
+    }
+
+    private static DateTimeOffset? NormalizeOptionalTimestamp(
+        DateTimeOffset? timestamp,
+        string parameterName) =>
+        timestamp is { } value ? NormalizeTimestamp(value, parameterName) : null;
+
+    private static void ValidateRestoredDeliveryState(
+        DateTimeOffset createdAt,
+        DateTimeOffset availableAt,
+        NotificationOutboxState state,
+        DateTimeOffset stateChangedAt,
+        int attemptCount,
+        DateTimeOffset? lastAttemptedAt,
+        DateTimeOffset? nextAttemptAt,
+        DateTimeOffset? deliveredAt,
+        DateTimeOffset? permanentlyFailedAt,
+        NotificationDeliveryFailureCode? lastFailureCode)
+    {
+        var isPending = state == NotificationOutboxState.Pending &&
+            stateChangedAt == createdAt &&
+            attemptCount == 0 &&
+            lastAttemptedAt is null &&
+            nextAttemptAt == availableAt &&
+            deliveredAt is null &&
+            permanentlyFailedAt is null &&
+            lastFailureCode is null;
+
+        var isRetryScheduled = state == NotificationOutboxState.RetryScheduled &&
+            stateChangedAt >= availableAt &&
+            attemptCount > 0 &&
+            lastAttemptedAt == stateChangedAt &&
+            nextAttemptAt > lastAttemptedAt &&
+            deliveredAt is null &&
+            permanentlyFailedAt is null &&
+            lastFailureCode is { IsEmpty: false };
+
+        var isDelivered = state == NotificationOutboxState.Delivered &&
+            stateChangedAt >= availableAt &&
+            attemptCount > 0 &&
+            lastAttemptedAt == stateChangedAt &&
+            deliveredAt == stateChangedAt &&
+            nextAttemptAt is null &&
+            permanentlyFailedAt is null &&
+            lastFailureCode is null;
+
+        var isPermanentlyFailed = state == NotificationOutboxState.PermanentlyFailed &&
+            stateChangedAt >= availableAt &&
+            attemptCount > 0 &&
+            lastAttemptedAt == stateChangedAt &&
+            permanentlyFailedAt == stateChangedAt &&
+            nextAttemptAt is null &&
+            deliveredAt is null &&
+            lastFailureCode is { IsEmpty: false };
+
+        if (!isPending && !isRetryScheduled && !isDelivered && !isPermanentlyFailed)
+        {
+            throw new ArgumentException(
+                "The stored notification delivery state is internally inconsistent.",
+                nameof(state));
+        }
     }
 }

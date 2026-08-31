@@ -125,6 +125,106 @@ public sealed class AuthenticationTransaction
             normalizedExpiresAt);
     }
 
+    internal static AuthenticationTransaction Rehydrate(
+        AuthenticationTransactionId transactionId,
+        ApplicationId applicationId,
+        TenantId? tenantId,
+        UserId? userId,
+        AuthenticationTransactionPurpose purpose,
+        CorrelationId correlationId,
+        AuthenticationTransactionState state,
+        DateTimeOffset createdAt,
+        DateTimeOffset expiresAt,
+        DateTimeOffset stateChangedAt,
+        DateTimeOffset? completedAt,
+        DateTimeOffset? failedAt)
+    {
+        if (!Enum.IsDefined(state))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(state),
+                state,
+                "The authentication transaction state is not defined.");
+        }
+
+        var transaction = Create(
+            transactionId,
+            applicationId,
+            tenantId,
+            userId,
+            purpose,
+            correlationId,
+            createdAt,
+            expiresAt);
+        var normalizedStateChangedAt = NormalizeTimestamp(
+            stateChangedAt,
+            nameof(stateChangedAt));
+        DateTimeOffset? normalizedCompletedAt = completedAt is null
+            ? null
+            : NormalizeTimestamp(completedAt.Value, nameof(completedAt));
+        DateTimeOffset? normalizedFailedAt = failedAt is null
+            ? null
+            : NormalizeTimestamp(failedAt.Value, nameof(failedAt));
+
+        if (normalizedStateChangedAt < transaction.CreatedAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(stateChangedAt),
+                stateChangedAt,
+                "The state change cannot precede transaction creation.");
+        }
+
+        if (state == AuthenticationTransactionState.Initiated &&
+            normalizedStateChangedAt != transaction.CreatedAt)
+        {
+            throw new ArgumentException(
+                "An initiated authentication transaction must retain its creation timestamp as the state-change timestamp.",
+                nameof(stateChangedAt));
+        }
+
+        if (state == AuthenticationTransactionState.Expired)
+        {
+            if (normalizedStateChangedAt < transaction.ExpiresAt)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(stateChangedAt),
+                    stateChangedAt,
+                    "An expired transaction must reach its configured expiry first.");
+            }
+        }
+        else if (normalizedStateChangedAt >= transaction.ExpiresAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(stateChangedAt),
+                stateChangedAt,
+                "A non-expiry transition must occur before the configured expiry.");
+        }
+
+        var hasValidTerminalTimestamps = state switch
+        {
+            AuthenticationTransactionState.Completed =>
+                normalizedCompletedAt == normalizedStateChangedAt &&
+                normalizedFailedAt is null,
+            AuthenticationTransactionState.Failed =>
+                normalizedFailedAt == normalizedStateChangedAt &&
+                normalizedCompletedAt is null,
+            _ => normalizedCompletedAt is null && normalizedFailedAt is null,
+        };
+
+        if (!hasValidTerminalTimestamps)
+        {
+            throw new ArgumentException(
+                "The authentication transaction terminal timestamps do not match its state.");
+        }
+
+        transaction.State = state;
+        transaction.StateChangedAt = normalizedStateChangedAt;
+        transaction.CompletedAt = normalizedCompletedAt;
+        transaction.FailedAt = normalizedFailedAt;
+
+        return transaction;
+    }
+
     public void IssueChallenge(DateTimeOffset occurredAt) =>
         Transition(
             AuthenticationTransactionState.ChallengeIssued,

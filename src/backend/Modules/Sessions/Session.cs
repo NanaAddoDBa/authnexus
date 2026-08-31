@@ -166,6 +166,152 @@ public sealed class Session
             normalizedAbsoluteExpiresAt);
     }
 
+    internal static Session Rehydrate(
+        SessionId sessionId,
+        SessionSecretHash secretHash,
+        UserId userId,
+        ApplicationId applicationId,
+        TenantId? tenantId,
+        SessionState state,
+        DateTimeOffset authenticatedAt,
+        DateTimeOffset createdAt,
+        DateTimeOffset lastSeenAt,
+        DateTimeOffset idleExpiresAt,
+        DateTimeOffset absoluteExpiresAt,
+        DateTimeOffset updatedAt,
+        DateTimeOffset stateChangedAt,
+        DateTimeOffset secretRotatedAt,
+        int rotationCount,
+        DateTimeOffset? revokedAt,
+        SessionRevocationReason? revocationReason,
+        DateTimeOffset? expiredAt)
+    {
+        if (!Enum.IsDefined(state))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(state),
+                state,
+                "The session state is not defined.");
+        }
+
+        if (revocationReason is not null && !Enum.IsDefined(revocationReason.Value))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(revocationReason),
+                revocationReason,
+                "The session revocation reason is not defined.");
+        }
+
+        if (rotationCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(rotationCount),
+                rotationCount,
+                "The session rotation count cannot be negative.");
+        }
+
+        var session = Create(
+            sessionId,
+            secretHash,
+            userId,
+            applicationId,
+            tenantId,
+            authenticatedAt,
+            createdAt,
+            idleExpiresAt,
+            absoluteExpiresAt);
+        var normalizedLastSeenAt = NormalizeTimestamp(lastSeenAt, nameof(lastSeenAt));
+        var normalizedUpdatedAt = NormalizeTimestamp(updatedAt, nameof(updatedAt));
+        var normalizedStateChangedAt = NormalizeTimestamp(
+            stateChangedAt,
+            nameof(stateChangedAt));
+        var normalizedSecretRotatedAt = NormalizeTimestamp(
+            secretRotatedAt,
+            nameof(secretRotatedAt));
+        DateTimeOffset? normalizedRevokedAt = revokedAt is null
+            ? null
+            : NormalizeTimestamp(revokedAt.Value, nameof(revokedAt));
+        DateTimeOffset? normalizedExpiredAt = expiredAt is null
+            ? null
+            : NormalizeTimestamp(expiredAt.Value, nameof(expiredAt));
+
+        if (normalizedLastSeenAt < session.CreatedAt ||
+            normalizedLastSeenAt > normalizedUpdatedAt ||
+            normalizedLastSeenAt >= session.IdleExpiresAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(lastSeenAt),
+                lastSeenAt,
+                "The last-seen time is outside the stored session lifetime.");
+        }
+
+        if (normalizedUpdatedAt < session.CreatedAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(updatedAt),
+                updatedAt,
+                "The session update time cannot precede creation.");
+        }
+
+        if (normalizedStateChangedAt < session.CreatedAt ||
+            normalizedStateChangedAt > normalizedUpdatedAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(stateChangedAt),
+                stateChangedAt,
+                "The session state-change time is inconsistent with its update time.");
+        }
+
+        if (normalizedSecretRotatedAt < session.CreatedAt ||
+            normalizedSecretRotatedAt > normalizedUpdatedAt ||
+            normalizedSecretRotatedAt >= session.IdleExpiresAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(secretRotatedAt),
+                secretRotatedAt,
+                "The secret-rotation time is outside the stored session lifetime.");
+        }
+
+        var hasValidStateDetails = state switch
+        {
+            SessionState.Active =>
+                normalizedStateChangedAt == session.CreatedAt &&
+                normalizedRevokedAt is null &&
+                revocationReason is null &&
+                normalizedExpiredAt is null,
+            SessionState.Revoked =>
+                normalizedRevokedAt == normalizedStateChangedAt &&
+                normalizedStateChangedAt == normalizedUpdatedAt &&
+                revocationReason is not null &&
+                normalizedExpiredAt is null,
+            SessionState.Expired =>
+                normalizedExpiredAt == normalizedStateChangedAt &&
+                normalizedStateChangedAt == normalizedUpdatedAt &&
+                normalizedExpiredAt >= session.EffectiveExpiresAt &&
+                normalizedRevokedAt is null &&
+                revocationReason is null,
+            _ => false,
+        };
+
+        if (!hasValidStateDetails)
+        {
+            throw new ArgumentException(
+                "The stored session terminal details do not match its state.");
+        }
+
+        session.State = state;
+        session.LastSeenAt = normalizedLastSeenAt;
+        session.UpdatedAt = normalizedUpdatedAt;
+        session.StateChangedAt = normalizedStateChangedAt;
+        session.SecretRotatedAt = normalizedSecretRotatedAt;
+        session.RotationCount = rotationCount;
+        session.RevokedAt = normalizedRevokedAt;
+        session.RevocationReason = revocationReason;
+        session.ExpiredAt = normalizedExpiredAt;
+
+        return session;
+    }
+
     public bool CanBeUsedAt(DateTimeOffset observedAt)
     {
         var normalizedObservedAt = NormalizeTimestamp(observedAt, nameof(observedAt));

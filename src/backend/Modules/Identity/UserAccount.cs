@@ -4,12 +4,16 @@ namespace AuthNexus.Modules.Identity;
 
 public sealed class UserAccount
 {
-    private UserAccount(UserId userId, DateTimeOffset createdAt)
+    private UserAccount(
+        UserId userId,
+        UserAccountState state,
+        DateTimeOffset createdAt,
+        DateTimeOffset stateChangedAt)
     {
         UserId = userId;
-        State = UserAccountState.PendingVerification;
+        State = state;
         CreatedAt = createdAt;
-        StateChangedAt = createdAt;
+        StateChangedAt = stateChangedAt;
     }
 
     public UserId UserId { get; }
@@ -27,7 +31,55 @@ public sealed class UserAccount
             throw new ArgumentException("A user ID is required.", nameof(userId));
         }
 
-        return new UserAccount(userId, NormalizeTimestamp(createdAt, nameof(createdAt)));
+        var normalizedCreatedAt = NormalizeTimestamp(createdAt, nameof(createdAt));
+
+        return new UserAccount(
+            userId,
+            UserAccountState.PendingVerification,
+            normalizedCreatedAt,
+            normalizedCreatedAt);
+    }
+
+    internal static UserAccount Restore(
+        UserId userId,
+        UserAccountState state,
+        DateTimeOffset createdAt,
+        DateTimeOffset stateChangedAt)
+    {
+        if (userId.IsEmpty)
+        {
+            throw new ArgumentException("A user ID is required.", nameof(userId));
+        }
+
+        if (!Enum.IsDefined(state))
+        {
+            throw new ArgumentOutOfRangeException(nameof(state), state, "The user account state is not defined.");
+        }
+
+        var normalizedCreatedAt = NormalizeTimestamp(createdAt, nameof(createdAt));
+        var normalizedStateChangedAt = NormalizeTimestamp(stateChangedAt, nameof(stateChangedAt));
+
+        if (normalizedStateChangedAt < normalizedCreatedAt)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(stateChangedAt),
+                stateChangedAt,
+                "The state change cannot precede account creation.");
+        }
+
+        if (state == UserAccountState.PendingVerification &&
+            normalizedStateChangedAt != normalizedCreatedAt)
+        {
+            throw new ArgumentException(
+                "A pending-verification account must retain its creation timestamp as the state-change timestamp.",
+                nameof(stateChangedAt));
+        }
+
+        return new UserAccount(
+            userId,
+            state,
+            normalizedCreatedAt,
+            normalizedStateChangedAt);
     }
 
     public void Activate(DateTimeOffset occurredAt) =>
