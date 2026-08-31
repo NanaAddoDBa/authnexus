@@ -51,6 +51,22 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-latest
+    env:
+      AUTHNEXUS_TEST_POSTGRES_CONNECTION: Host=127.0.0.1;Port=5432;Database=postgres;Username=authnexus;Password=authnexus-test-postgres;Include Error Detail=true
+    services:
+      postgres:
+        image: postgres:16.10-alpine
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: authnexus
+          POSTGRES_PASSWORD: authnexus-test-postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username=authnexus --dbname=postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - name: Check out source
         uses: actions/checkout@v6
