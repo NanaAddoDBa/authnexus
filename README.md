@@ -1,9 +1,11 @@
 # AuthNexus
 
-AuthNexus is a standalone identity and authentication platform. This repository is still in V0.1:
-it has a buildable web/API skeleton, a working local dependency stack, and all six Phase D
-in-memory domain foundations. It still has no login endpoint, database tables, or runtime
-authentication orchestration.
+AuthNexus is a standalone identity and authentication platform. This repository is still in V0.1.
+Its six Phase D domain roots now have an EF Core/PostgreSQL persistence layer: application-owned
+repository contracts, infrastructure mappings and repositories, a shared unit of work, protected
+notification destinations, and an accepted initial migration. The API does not register or invoke
+this layer, and there is still no login endpoint or runtime authentication flow. Phase E is
+complete; Phase F is the next planned phase and has not started.
 
 ## What works today
 
@@ -11,15 +13,16 @@ authentication orchestration.
 | --- | --- |
 | Web | Next.js 16 app in `apps/web`; `/` renders a static project-status page. |
 | API | ASP.NET Core 10 host in `apps/api`; it starts without exposing product routes. |
-| Backend | Eleven compiled module assemblies. Applications, Identity, Authentication, Sessions, Audit, and Notifications own the six Phase D records and invariants; the other five modules still contain markers only. There is no persistence or runtime orchestration. |
+| Backend | `AuthNexus.Application` owns repository and unit-of-work contracts. `AuthNexus.Infrastructure` maps the six persisted roots to PostgreSQL and supplies Npgsql repository adapters. No host composition or authentication orchestration is wired. |
 | Local services | PostgreSQL 16.10, Redis 7.4.5, and Mailpit 1.27.4 in `compose.yaml`. |
-| Tests | 453 backend cases cover the product contract, all six Phase D boundaries, and two executable architecture rules; the web has type-check, lint, and build checks. |
-| CI | Frontend, backend, and local Compose runtime are validated independently. |
+| Tests | All 26 solution projects build cleanly; 571 backend cases across ten test projects cover the product contract, six Phase D roots, two architecture rules, and Phase E PostgreSQL integration and security behavior. |
+| CI | The source workflow runs frontend, backend, and local Compose jobs separately. The backend job supplies a disposable PostgreSQL service for the Phase E suites. |
 
-Application/account/transaction loading, login identifiers, registration, passwords, OTPs,
-social providers, passkeys, database mappings, cookie handling, policy evaluation, transaction
-orchestration, notification delivery, and production deployment are not implemented. The
-documents under `docs/` distinguish current code from later work.
+No application service currently loads these records. Login identifiers, registration workflows,
+credentials, OTP challenges, social providers, passkeys, cookie handling, policy evaluation,
+authentication orchestration, notification delivery, and production deployment are not
+implemented. The documents under `docs/` distinguish checked-in implementation from tested or
+running behavior.
 
 ## Start the local dependencies
 
@@ -34,7 +37,7 @@ The default endpoints are deliberately bound to the local machine:
 
 | Service | Address | Local purpose |
 | --- | --- | --- |
-| PostgreSQL | `localhost:5432` | Future durable identity data |
+| PostgreSQL | `localhost:5432` | Durable local dependency; the API is not connected |
 | Redis | `localhost:6379` | Future non-authoritative coordination |
 | Mailpit SMTP | `localhost:1025` | Capture development email |
 | Mailpit UI | `http://localhost:8025` | Inspect captured email |
@@ -67,11 +70,14 @@ pnpm --dir apps/web build
 
 dotnet restore AuthNexus.sln
 dotnet build AuthNexus.sln --configuration Release --no-restore
-dotnet test AuthNexus.sln --configuration Release --no-build
 
 docker compose config --quiet
 docker compose up --detach --wait --wait-timeout 120
 powershell -NoProfile -ExecutionPolicy Bypass -File infra/docker/verify-local-stack.ps1
+
+$env:AUTHNEXUS_TEST_POSTGRES_CONNECTION = "Host=127.0.0.1;Port=5432;Database=postgres;Username=authnexus;Password=authnexus-local-postgres;Include Error Detail=true"
+dotnet test AuthNexus.sln --configuration Release --no-build
+Remove-Item Env:AUTHNEXUS_TEST_POSTGRES_CONNECTION -ErrorAction SilentlyContinue
 ```
 
 ## Repository map
@@ -81,23 +87,29 @@ apps/api/                       ASP.NET Core process
 apps/web/                       Next.js process
 src/backend/AuthNexus.*         shared technical-layer assemblies
 src/backend/Modules/*/          eleven product-module class libraries
+src/backend/AuthNexus.Application/Persistence/
+                                repository and unit-of-work ports
+src/backend/AuthNexus.Infrastructure/Persistence/
+                                EF Core model, repositories, protection, and migrations
 tests/architecture/             compiled-module and project-graph checks
 tests/unit/                     product and Phase D domain-boundary tests
-tests/integration|security|e2e  reserved test roots with scope notes
+tests/integration/              Phase E migration, repository, transaction, and concurrency tests
+tests/security/                 Phase E constraints, immutability, and destination-protection tests
+tests/e2e/                      reserved for later runnable product journeys
+tests/shared/                   guarded disposable-PostgreSQL test database support
 infra/docker/                   local-stack verification
 docs/decisions/                 accepted architecture decisions
-docs/implementation-notes/      completed task records and test evidence
+docs/implementation-notes/      phase records with explicit implementation/evidence status
+.config/dotnet-tools.json       repository-local dotnet-ef version
 compose.yaml                    PostgreSQL, Redis, and Mailpit
 ```
 
 ## Release progress
 
-V0.1 is delivered as small, reviewable phases. Phases A through C established the repository,
-local dependencies, and compile-time module boundaries. Phase D now defines `ApplicationProfile`,
-`UserAccount`, `AuthenticationTransaction`, `Session`, immutable `SecurityEvent`, and the protected
-`NotificationOutboxMessage` delivery-state record. These are in-memory contracts, not running
-authentication capability. Persistence remains Phase E work and has not started. No `v0.1.0` tag
-exists because the rest of V0.1 has not passed acceptance.
+V0.1 is delivered as small, reviewable phases. Phases A through E are complete. The Phase E gate
+passed 20 integration cases, 98 persistence-security cases, both architecture rules, and the full
+571-case backend suite. Phase F is next but not started. No `v0.1.0` tag exists because Phases F
+through N remain open.
 
 The detailed phase ledger is in [docs/releases/v0.1.md](docs/releases/v0.1.md).
 

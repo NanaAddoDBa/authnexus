@@ -13,3 +13,4 @@ current implementation evidence for each security-relevant decision.
 | [0005](0005-central-authentication-orchestration.md) | Centralize transactions, policy, OTP, and providers | Accepted |
 | [0006](0006-application-profiles-and-registration.md) | Use application profiles and schema-driven registration | Accepted |
 | [0007](0007-one-way-monorepo-mirror.md) | Mirror AuthNexus one way into nana-monorepo | Accepted |
+| [0008](0008-postgresql-persistence-boundary.md) | Keep PostgreSQL persistence in Infrastructure | Accepted |

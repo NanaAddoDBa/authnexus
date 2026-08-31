@@ -1,66 +1,128 @@
 # Testing Contract
 
-## Checks that run now
+## Accepted command surface
 
-| Boundary | Command | What it proves |
+| Boundary | Command | Current accepted result |
 | --- | --- | --- |
-| Web types | `pnpm --dir apps/web typecheck` | TypeScript compiles without generated route-type assumptions. |
-| Web lint | `pnpm --dir apps/web lint` | Current source passes the configured Next.js ESLint rules. |
-| Web build | `pnpm --dir apps/web build` | Next.js can produce the current static routes. |
-| Backend build | `dotnet build AuthNexus.sln --configuration Release` | All 24 solution projects compile with warnings treated as errors. |
-| Contract test | `dotnet test tests/unit/AuthNexus.Contracts.Tests --configuration Release` | The canonical product-name contract holds. |
-| ApplicationProfile tests | `dotnet test tests/unit/AuthNexus.Modules.Applications.Tests --configuration Release` | 34 cases cover profile construction, strong identifiers, enum guards, locale normalization, redirect safety, canonical matching, collection copying, and duplicate rejection. |
-| UserAccount tests | `dotnet test tests/unit/AuthNexus.Modules.Identity.Tests --configuration Release` | 46 cases cover account creation, all seven legal transitions, all 35 forbidden state/action pairs, UTC chronology, terminal deletion, and rejection without mutation. |
-| AuthenticationTransaction tests | `dotnet test tests/unit/AuthNexus.Modules.Authentication.Tests --configuration Release` | 116 cases protect the 14-purpose vocabulary, all 18 legal and 38 forbidden state/action pairs, application/tenant/user/correlation context, UTC chronology, exact and late expiry, terminal timestamps, replay rejection, and non-mutation. |
-| Session tests | `dotnet test tests/unit/AuthNexus.Modules.Sessions.Tests --configuration Release` | 65 cases protect identity/context, canonical fixed hash representation including pad bits, three states, ten revocation reasons, lifetime construction, half-open usability, activity, rotation, revocation, idle/absolute expiry, all 12 state/action pairs, UTC chronology, and rejection snapshots. |
-| SecurityEvent tests | `dotnet test tests/unit/AuthNexus.Modules.Audit.Tests --configuration Release` | 107 cases protect the 37 exact type codes, six results, immutable context, UTC time, bounded summaries and metadata, separator-aware secret-key guardrails, Unicode display safety, defensive copying, and non-leaking validation. |
-| NotificationOutbox tests | `dotnet test tests/unit/AuthNexus.Modules.Notifications.Tests --configuration Release` | 82 cases protect message context, destination/payload disclosure boundaries, four states, three channels, all six legal and six forbidden state/action pairs, exact due times, retries, terminal outcomes, UTC chronology, and rejection snapshots. |
-| Architecture tests | `dotnet test tests/architecture/AuthNexus.Architecture.Tests --configuration Release` | Every required module has a compiled marker and direct production project references match the approved graph. |
-| Compose model | `docker compose config --quiet` | Interpolation and Compose structure are valid. |
-| Local dependencies | `infra/docker/verify-local-stack.ps1` | Containers are healthy; PostgreSQL accepts a query, Redis accepts an authenticated command, and Mailpit is ready. |
+| Web types | `pnpm --dir apps/web typecheck` | Passed. |
+| Web lint | `pnpm --dir apps/web lint` | Passed. |
+| Web production build | `pnpm --dir apps/web build` | Passed. |
+| Backend build | `dotnet build AuthNexus.sln --configuration Release --no-restore` | All 26 solution projects compiled with zero warnings and zero errors. |
+| Full backend suite | `dotnet test AuthNexus.sln --configuration Release --no-build` | 571 of 571 cases passed across ten test projects. |
+| Architecture | `dotnet test tests/architecture/AuthNexus.Architecture.Tests --configuration Release` | Both compiled-module and direct-reference rules passed. |
+| Persistence integration | `dotnet test tests/integration/AuthNexus.Persistence.Integration.Tests --configuration Release` | 20 of 20 cases passed against disposable PostgreSQL databases. |
+| Persistence security | `dotnet test tests/security/AuthNexus.Persistence.Security.Tests --configuration Release` | 98 of 98 cases passed against disposable PostgreSQL databases. |
+| EF model drift | `dotnet ef migrations has-pending-model-changes --project src/backend/AuthNexus.Infrastructure/AuthNexus.Infrastructure.csproj --startup-project src/backend/AuthNexus.Infrastructure/AuthNexus.Infrastructure.csproj --context AuthNexusDbContext --configuration Release --no-build` | No pending model changes. |
+| Compose model | `docker compose config --quiet` | Passed. |
+| Local dependencies | `infra/docker/verify-local-stack.ps1` | PostgreSQL query, authenticated Redis ping, and Mailpit readiness passed. |
 
-The source workflow runs frontend, backend, and local-runtime jobs separately. Its backend job
-builds the solution and runs all eight test projects. The downstream mirror request waits for all
-three jobs.
+The 571 backend cases are accounted for as follows:
 
-## Empty test roots
+| Test project | Cases |
+| --- | ---: |
+| Product contract | 1 |
+| `ApplicationProfile` unit tests | 34 |
+| `UserAccount` unit tests | 46 |
+| `AuthenticationTransaction` unit tests | 116 |
+| `Session` unit tests | 65 |
+| `SecurityEvent` unit tests | 107 |
+| `NotificationOutboxMessage` unit tests | 82 |
+| Architecture tests | 2 |
+| Phase E persistence integration tests | 20 |
+| Phase E persistence security tests | 98 |
+| **Total** | **571** |
 
-`tests/integration`, `tests/security`, and `tests/e2e` contain scope notes rather than executable
-tests. There is no behavior to exercise there yet. Testcontainers should arrive with database and
-Redis integration code; API-host tests with endpoints; browser tests with the first real user
-journey. Adding placeholder behavior tests would inflate the count without increasing confidence.
+## Disposable PostgreSQL contract
 
-The architecture suite is not a placeholder. It protects a concrete production graph and fails
-when a module disappears, a new backend project is undeclared, or a direct reference crosses a
-boundary. Any intentional graph change must update the expected graph in the same review.
+The two Phase E projects link `tests/shared/PostgreSqlTestDatabase.cs`. They never run migrations
+against the durable `authnexus` database. For each fixture invocation, the helper connects through
+the `postgres` administration database, creates a name in the exact form
+`authnexus_test_<32 hexadecimal characters>`, runs the requested migration or test, clears Npgsql
+pools, and drops that database with `DROP DATABASE ... WITH (FORCE)`.
 
-On the current Windows development machine, Application Control can block an already-built test or
-copied module DLL even though the same solution build succeeds. The control is not disabled. The
-hosted Linux backend job is therefore the whole-suite acceptance result when that occurs. During
-D.3, all 116 transaction and both architecture cases passed in focused local runs. Subsequent
-whole-suite attempts were blocked while loading first the unchanged Identity assembly and then
-copied Authentication assemblies (`0x800711C7`).
+Deletion is guarded in code. A name is rejected unless it has the `authnexus_test_` prefix, the
+exact expected length, and a hexadecimal-only random suffix. The database connection used by a
+test also has pooling disabled. These checks prevent the cleanup path from accepting `authnexus`,
+`postgres`, an empty name, or a broad database target.
 
-During D.4, the initial 62 Session cases passed locally. A review then added two canonical
-base64url pad-bit rejection cases and one absolute-deadline case. A later full Phase D run executed
-the final 65-case Session matrix successfully. Earlier attempts were blocked while loading its
-copied module assembly; the security control was not disabled.
+When `AUTHNEXUS_TEST_POSTGRES_CONNECTION` is absent, the local-only default is:
 
-During D.5, the complete 107-case Audit suite passed locally in Release. The Audit module's only
-direct production dependency is Domain. Architecture execution remains subject to the same
-Windows Application Control limitation and is accepted through hosted Linux CI.
+```text
+Host=127.0.0.1;Port=5432;Database=postgres;Username=authnexus;Password=authnexus-local-postgres;Include Error Detail=true
+```
 
-During D.6, the complete 82-case Notifications suite passed locally in Release. The suite includes
-an ordinary JSON-serialization check for destination disclosure, scalar-aware Unicode formatting
-rejection, and malformed-surrogate coverage. The Notifications module's only direct production
-dependency is Domain. Hosted Linux CI remains the decisive whole-solution and architecture gate.
+Use an override only for a disposable local or CI PostgreSQL instance. The account must be able to
+create and drop databases. Never point this variable at production, staging, a shared development
+server, or a PostgreSQL cluster whose databases are not disposable.
 
-The final local Phase D pass restored and compiled all 24 solution projects with zero warnings and
-zero errors. Of the 453 declared backend cases, 417 executed and passed. Windows Application
-Control blocked the 34 ApplicationProfile cases and both architecture cases before their
-assertions loaded (`0x800711C7`). Hosted Linux must therefore execute and pass all 453 cases before
-the source commit is accepted for mirroring.
+Run the focused suites from the repository root:
 
-Each authentication capability must later cover its success path, ordinary rejection, expiry,
-replay, enumeration behavior, concurrency, audit output, session effect, and log redaction. Those
-cases belong beside the implementation that makes them meaningful.
+```powershell
+docker compose up --detach postgres --wait --wait-timeout 120
+
+$env:AUTHNEXUS_TEST_POSTGRES_CONNECTION = "Host=127.0.0.1;Port=5432;Database=postgres;Username=authnexus;Password=authnexus-local-postgres;Include Error Detail=true"
+
+dotnet test tests/integration/AuthNexus.Persistence.Integration.Tests `
+  --configuration Release
+dotnet test tests/security/AuthNexus.Persistence.Security.Tests `
+  --configuration Release
+
+Remove-Item Env:AUTHNEXUS_TEST_POSTGRES_CONNECTION -ErrorAction SilentlyContinue
+```
+
+The accepted Phase E run finished with zero `authnexus_test_*` databases left behind. The durable
+`authnexus` database and the Compose `postgres-data` volume were not migrated, reset, truncated,
+or deleted.
+
+The model-drift command uses the design-time variable, not the test-administration variable. It is
+read-only but the factory requires a non-empty connection string:
+
+```powershell
+$env:AUTHNEXUS_POSTGRES_CONNECTION = "Host=127.0.0.1;Port=5432;Database=authnexus;Username=authnexus;Password=authnexus-local-postgres"
+
+dotnet ef migrations has-pending-model-changes `
+  --project src/backend/AuthNexus.Infrastructure/AuthNexus.Infrastructure.csproj `
+  --startup-project src/backend/AuthNexus.Infrastructure/AuthNexus.Infrastructure.csproj `
+  --context AuthNexusDbContext `
+  --configuration Release `
+  --no-build
+
+Remove-Item Env:AUTHNEXUS_POSTGRES_CONNECTION -ErrorAction SilentlyContinue
+```
+
+## Phase E persistence coverage
+
+The 20 integration cases apply, downgrade, and reapply the real migration; inspect migration
+history and model drift; round-trip all six roots; exercise all four optimistic-concurrency paths;
+commit and roll back multi-record work; reuse a context after rollback; and verify due-message
+filtering, exact-time inclusion, deterministic ordering, and batch validation.
+
+The 98 security cases execute every declared check constraint and its nullable lifecycle
+regressions; exercise both orders of the profile/first-redirect transaction; preserve the
+at-least-one-redirect rule across replacement, move, delete, cascade, and truncate operations;
+reject tracked and direct-SQL audit mutation; prove no plaintext destination column exists; and
+exercise ciphertext tampering, unknown and wrong keys, cross-row copying, and key rotation.
+
+Those tests found two schema defects before acceptance:
+
+1. The redirect-cardinality triggers were deferred, but the child foreign key was immediate. A
+   child-first transaction therefore failed before its parent could be inserted. The migration now
+   makes `fk_application_redirect_uris_application_profiles` deferrable and initially deferred.
+2. PostgreSQL check constraints accept an expression whose result is `UNKNOWN`. Equality against a
+   nullable lifecycle timestamp could therefore pass without the timestamp being present. The
+   authentication-transaction, session, and outbox lifecycle predicates now require each
+   state-required nullable column with an explicit `IS NOT NULL` clause.
+
+Both fixes are present in the EF model, migration, designer, and snapshot, and their regression
+cases pass in the 98-case security suite.
+
+## Phase boundary
+
+These suites close Phase E because they accept the persistence layer introduced in Phase E. They
+do not start Phase M. Phase M remains the later whole-product acceptance phase for executable HTTP
+authentication journeys, runtime authorization, abuse handling, log behavior, and end-to-end
+browser flows after Phases F through L supply those capabilities.
+
+Every later authentication capability must add tests for its success path, ordinary rejection,
+expiry, replay, enumeration behavior, concurrency, audit output, session effect, and log
+redaction beside the implementation that makes those paths real.

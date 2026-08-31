@@ -73,10 +73,11 @@ The entity deliberately carries no email, phone, username, credential, display p
 application ID, tenant ID, role, or consent. D.2 establishes the platform identity root, not a
 login method or application membership.
 
-The plans require every security-sensitive account transition to emit an audit event. D.2 does not
-claim that behavior: no runtime workflow or persistence path calls these methods yet. The later
-SecurityEvent and persistence work must make audit emission atomic with the persisted transition
-before an endpoint or administrative operation can change account state.
+The plans require every security-sensitive account transition to emit an audit event. No runtime
+workflow invokes these transitions. Phase E can stage and persist an account update through the
+shared unit of work, but no handler currently couples that update to a `SecurityEvent`. That atomic
+workflow remains mandatory before an endpoint or administrative operation can change account
+state.
 
 ## D.3 AuthenticationTransaction
 
@@ -165,9 +166,10 @@ overwritten by `Expired`. All operation times are UTC-normalized and globally no
 rejection cannot partially alter lifecycle state.
 
 The full plan's assurance, authentication-method, MFA, reauthentication, device, user-agent, and
-network fields remain deferred until their evidence, policy, and privacy contracts exist. Secret
-generation/hash derivation, cookies, middleware, lookup, logout orchestration, persistence, and
-endpoints remain Phase E/G work rather than D.4 behavior.
+network fields remain deferred until their evidence, policy, and privacy contracts exist. Phase E
+maps and rehydrates the current record and applies an optimistic version check to updates. Secret
+generation/hash derivation, constant-time verification, cookies, middleware, request lookup,
+logout orchestration, and endpoints remain Phase G work.
 
 ## D.5 SecurityEvent
 
@@ -190,8 +192,11 @@ rejects control/Unicode separator/format characters, duplicates, and separator-a
 keys. This is not the Phase I redaction pipeline: safe-looking keys can still carry unsafe values,
 so future trusted builders and serialized-output tests remain mandatory.
 
-“Append-only” in D.5 means the in-memory event has no mutation surface. No event is persisted,
-queried, emitted, retained, or transactionally coupled to a D.1-D.4 state change yet.
+“Append-only” still begins with the event's lack of a mutation surface. Phase E adds an append/get
+repository, rejects tracked update/delete operations, and declares database update/delete/truncate
+rejection triggers in the migration. No workflow emits an event, and query services, retention,
+authorization, exports, transactional coupling, and database-level acceptance tests remain
+deferred.
 
 ## D.6 NotificationOutboxMessage
 
@@ -210,31 +215,39 @@ keep terminal timestamps mutually exclusive.
 
 The clear destination has no public `Value` getter. A future provider adapter must call the
 explicit `RevealForDelivery()` method; display and ordinary JSON serialization remain redacted.
-The payload makes defensive byte copies and exposes only explicit copy-for-delivery access. These
-are in-memory disclosure boundaries, not a claim of encryption or safe persistence. Destination
-protection, atomic outbox writes, worker claims, retry policy, templates, providers, receipts, and
-replay remain Phase E/J work.
+The payload makes defensive byte copies and exposes only explicit copy-for-delivery access.
+
+Phase E encrypts the revealed destination with AES-GCM before writing it, and stores the key ID and
+envelope format version beside the ciphertext. Authenticated associated data binds the envelope to
+its outbox message ID, so moving a valid ciphertext to another row fails authentication. The
+payload remains caller-protected and is stored with its own key ID and format version. The
+repository supports due-message lookup and optimistic updates. Key provisioning, managed key
+storage, a rotation procedure, claim/lease behavior, retry policy, templates, providers, receipts,
+and operational replay remain outside Phase E.
 
 ## V0.1 vocabulary
 
 The V0.1 domain ledger is:
 
-| Concept | Reason it belongs in V0.1 | Implemented |
-| --- | --- | --- |
-| `ApplicationProfile` | Resolve the calling application's redirect and policy context. | D.1 foundation |
-| `UserAccount` | Internal identity root independent of login method. | D.2 foundation |
-| `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | D.3 foundation |
-| `Session` | Durable record behind an opaque browser cookie. | D.4 foundation |
-| `SecurityEvent` | Append-only security-relevant activity. | D.5 foundation |
-| `NotificationOutboxMessage` | Record notification work that must later commit with its originating state change. | D.6 foundation |
+| Concept | Reason it belongs in V0.1 | Domain foundation | Phase E persistence |
+| --- | --- | --- | --- |
+| `ApplicationProfile` | Resolve the calling application's redirect and policy context. | D.1 complete | add/get mapping plus redirect child table |
+| `UserAccount` | Internal identity root independent of login method. | D.2 complete | add/get/update with version token |
+| `AuthenticationTransaction` | One server-owned state machine for an interactive attempt. | D.3 complete | add/get/update with version token |
+| `Session` | Durable record behind an opaque browser cookie. | D.4 complete | add/get/update with version token |
+| `SecurityEvent` | Append-only security-relevant activity. | D.5 complete | append/get mapping and append-only guards |
+| `NotificationOutboxMessage` | Record notification work that must later commit with its originating state change. | D.6 complete | add/get/due/update, version token, protected destination |
 
 Password credentials arrive in V0.2; OTP challenges and delivery records in V0.3; external
 identities in V0.4; passkeys in V0.5; TOTP and recovery codes in V0.6. Those models should not be
 pre-created in V0.1 without the behavior and tests that define them.
 
-There are no repositories, EF Core mappings, migrations, seeds, administrative commands, or HTTP
-representations. Those omissions are deliberate: D.1 through D.6 define valid in-memory state
-only.
+Phase E supplies repository contracts, EF Core mappings, and an initial migration. There are still
+no seeds, administrative commands, HTTP representations, or API persistence composition. Twenty
+integration cases and 98 persistence-security cases now accept the migration, all six repository
+round trips, four stale-writer paths, transaction rollback, every declared check constraint,
+append-only audit enforcement, and notification-destination protection against disposable
+PostgreSQL databases.
 
 ## Constraints carried into implementation
 
@@ -243,5 +256,7 @@ only.
 - Session cookies contain random opaque secrets; durable storage receives only a verifier/hash.
 - Plaintext passwords, OTPs, session secrets, provider secrets, and recovery codes never belong in
   transaction or audit records.
-- Security notifications are written through an outbox in the same PostgreSQL transaction as the
-  state change.
+- The shared unit of work is designed to commit a domain change and outbox insert in the same
+  PostgreSQL transaction. Database tests prove multi-record commit, rollback after a real unique
+  index failure, tracker clearing, and same-context reuse. No orchestrator stages the eventual
+  domain-change/outbox pair yet.

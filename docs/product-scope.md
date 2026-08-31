@@ -9,8 +9,10 @@ while AuthNexus owns the security-sensitive workflow.
 
 - The reusable browser experience in `apps/web`.
 - The public HTTP boundary in `apps/api`.
-- Identity, authentication, session, recovery, policy, audit, notification, and provider code under
-  `src/backend` as those modules are added.
+- Domain code in the Applications, Identity, Authentication, Sessions, Audit, and Notifications
+  modules; the other five module assemblies currently retain markers only.
+- Persistence ports in `AuthNexus.Application` and PostgreSQL mappings, repositories, migration
+  tooling, and notification-destination protection in `AuthNexus.Infrastructure`.
 - Local dependency and future deployment definitions under `infra` and `compose.yaml`.
 - Product decisions and release evidence under `docs`.
 
@@ -24,17 +26,18 @@ while AuthNexus owns the security-sensitive workflow.
 
 ## Current evidence
 
-Through D.6, the code can build the web and API processes, start PostgreSQL, Redis, and Mailpit
-locally, construct an `ApplicationProfile` that rejects unsafe or incomplete configuration,
-exercise the legal `UserAccount` state transitions, and construct an expiring
-`AuthenticationTransaction` whose 18 legal and 38 forbidden state/action pairs are executable in
-memory. It can also exercise a Session record's idle/absolute lifetime, stored-verifier rotation,
-revocation, and expiry rules without accepting a raw cookie secret. It can construct an immutable
-SecurityEvent using the fixed 37-code catalogue, six explicit outcomes, application/tenant/session
-context, and bounded defensive metadata. Finally, it can construct a protected notification
-envelope and record due delivery, retry, success, or permanent failure through six legal
-state/action pairs. No running process loads or stores these models, creates a transaction, issues
-or validates a session, writes an audit event, or delivers an outbox message. There is still no
-login identifier, credential, challenge verification, cookie, authentication endpoint, provider
-adapter, worker, or callback. Later-flow documents remain design inputs until corresponding code
-and tests exist.
+Phase D supplies the six executable domain records and their in-memory invariants:
+`ApplicationProfile`, `UserAccount`, `AuthenticationTransaction`, `Session`, `SecurityEvent`, and
+`NotificationOutboxMessage`.
+
+Phase E adds repository ports, Npgsql/EF Core mappings, relational constraints, optimistic version
+tokens for mutable records, append-only audit guards, AES-GCM destination protection for outbox
+recipients, a due-message query, and one shared transaction boundary. The migration declares seven
+tables across six module schemas plus a separate migration-history schema. Phase E acceptance
+applied, downgraded, and reapplied it only in guarded disposable databases; 20 integration and 98
+security cases passed, and the durable local `authnexus` database and volume were left unchanged.
+
+No running process registers or calls these adapters. There is still no login identifier,
+credential, challenge verifier, session-cookie subsystem, authentication endpoint, provider
+adapter, notification worker, or callback. Later-flow documents remain design inputs until their
+corresponding runtime code and tests exist.

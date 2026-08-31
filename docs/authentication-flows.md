@@ -1,13 +1,17 @@
 # Authentication Flow Boundary
 
-There is no authentication flow in the repository yet. D.3 provides an in-memory
-`AuthenticationTransaction` with purpose, expiry, and legal state transitions, but no host creates
-or persists one. D.4 provides an in-memory Session lifetime and revocation record, but it does not
-generate a secret, set a cookie, look up a record, or authenticate a request.
-The D.5 `SecurityEvent` is also not wired to these lifecycle methods; no successful or rejected
-operation emits or persists an event yet.
-The D.6 `NotificationOutboxMessage` can record delivery outcomes in memory, but no workflow writes
-one, no database commits one beside a state change, and no worker sends it.
+There is no authentication flow in the repository yet. Persistence adapters now exist for
+`ApplicationProfile`, `UserAccount`, `AuthenticationTransaction`, `Session`, `SecurityEvent`, and
+`NotificationOutboxMessage`, but no application service or host invokes them. No request creates
+an authentication transaction, verifies evidence, changes account state, or issues a session.
+
+`ISecurityEventRepository` can stage an append, but no lifecycle workflow emits an event.
+`INotificationOutboxRepository` can stage and query messages, and the shared unit of work can
+commit several staged records in one transaction, but no workflow currently stages a state change
+and outbox insert together. There is no outbox claim/lease or delivery worker.
+
+The D.4 session record still does not generate a secret, set a cookie, look up a request's
+credential, or authenticate that request.
 `apps/api/Program.cs` builds and runs an empty ASP.NET Core host;
 `apps/web/src/app/page.tsx` renders project status. No endpoint accepts an identifier, password,
 OTP, provider callback, transaction ID, or session cookie.

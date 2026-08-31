@@ -12,3 +12,7 @@ sessions, evidence, policies, audit, and outbox state.
 
 Framework support does not replace the domain model. Provider-specific behavior, account linking,
 policy, and session ownership remain AuthNexus responsibilities.
+
+Phase E persists only AuthNexus's `UserAccount` domain record. It does not introduce ASP.NET Core
+Identity stores, identifier tables, credential tables, password hashes, or framework sign-in
+behavior.

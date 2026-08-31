@@ -10,5 +10,6 @@ it will not be the sole durable source of security-critical state.
 
 ## Consequences
 
-Redis failure behavior must be explicit and observable. Database migrations begin in V0.1 Phase E;
-the local service stack begins in Phase B.
+Redis failure behavior must be explicit and observable. Phase B introduced the local service
+stack. Phase E introduces the first PostgreSQL model and migration; it does not add a Redis
+application consumer.
